@@ -1,18 +1,19 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import warnings
 import numpy as np
 
 from pathlib import Path
 from typing_extensions import override, Self
-from typing import Sequence
+from typing import Sequence, get_args
 
 from sjpy.audio import load_from_mp4_file
 from sjpy.string import normalize_text_only_en
 from sjpy.file.json import JsonSaver, load_json
 
 from dataset_loader.interface import Dataset, Sample
+
+from dataset_loader.esic.constants import ESICTask, DEFAULT_TASK
 
 if TYPE_CHECKING:
     pass
@@ -21,10 +22,19 @@ DEFAULT_SAMPLE_RATE = 16_000
 
 
 class ESICv1Dataset(Dataset):
-    def __init__(self, X: list[Path], Y: list[Path], sr: int = DEFAULT_SAMPLE_RATE):
+    def __init__(
+        self,
+        X: list[Path],
+        Y: list[Path],
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[ESICTask, ...] = DEFAULT_TASK,
+    ):
         if len(X) != len(Y):
             raise ValueError("X and Y must have the same length")
-        super().__init__(task=("asr",))
+        for t in task:
+            if t not in get_args(ESICTask):
+                raise ValueError(f"Invalid task: {t}")
+        super().__init__(task=task)
         self._sr = sr
         self._X = X
         self._Y = Y
@@ -108,7 +118,10 @@ class ESICv1Dataset(Dataset):
     @override
     def from_dict(data: dict) -> Self:
         return ESICv1Dataset(
-            [Path(x) for x in data["X"]], [Path(y) for y in data["Y"]], sr=data["sr"]
+            [Path(x) for x in data["X"]],
+            [Path(y) for y in data["Y"]],
+            sr=data["sr"],
+            task=data.get("task", DEFAULT_TASK),
         )
 
     @staticmethod
@@ -116,10 +129,5 @@ class ESICv1Dataset(Dataset):
         _, data = load_json(path)
         return ESICv1Dataset.from_dict(data)
 
-
-if __name__ != "__main__":
-    warnings.warn(
-        "[INFO] ESICv1Dataset 화자분리 데이터 없음", category=UserWarning, stacklevel=2
-    )
 
 __all__ = ["ESICv1Dataset"]

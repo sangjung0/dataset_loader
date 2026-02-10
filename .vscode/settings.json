@@ -94,5 +94,13 @@
   "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.words": ["esic", "Libri", "LIBRISPEECH", "ndarray", "sjpy", "Tedlium"]
+  "cSpell.words": [
+    "esic",
+    "Huggingface",
+    "Libri",
+    "LIBRISPEECH",
+    "ndarray",
+    "sjpy",
+    "Tedlium"
+  ]
 }

@@ -4,11 +4,11 @@ import librosa
 import numpy as np
 
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, get_args
 from typing_extensions import override, Self
 
 from dataset_loader.interface import Dataset, Sample
-from dataset_loader.interface.types import Task
+from dataset_loader.librispeech.constants import LibriTask
 
 
 class LibriSpeechDataset(Dataset):
@@ -18,12 +18,15 @@ class LibriSpeechDataset(Dataset):
         audio_paths: list[Path],
         references: list[str],
         sample_rate: int,
-        task: tuple[Task, ...],
+        task: tuple[LibriTask, ...],
     ):
         if len(ids) != len(audio_paths) or len(ids) != len(references):
             raise ValueError(
                 "ids, audio_paths, and references must have the same length"
             )
+        for t in task:
+            if t not in get_args(LibriTask):
+                raise ValueError(f"Invalid task: {t}")
         super().__init__(task=task)
 
         self._ids = ids

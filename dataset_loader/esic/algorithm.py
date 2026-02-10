@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from pathlib import Path
 from collections.abc import Container
 
-from dataset_loader.esic.file_type import FILE_TYPE
+from dataset_loader.esic.constants import FILE_TYPE
 
 if TYPE_CHECKING:
     pass

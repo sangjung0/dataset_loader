@@ -8,7 +8,7 @@ from typing import Generator, Any, overload, Sequence
 from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from dataset_loader.interface.types import Task
+    from dataset_loader.interface.constants import Task
     from dataset_loader.interface.sample import Sample
     from dataset_loader.interface.concat_dataset import ConcatDataset
 

@@ -1,36 +1,24 @@
-import warnings
 import os
 
 from pathlib import Path
-from typing import Literal, Sequence
-
-from dataset_loader.interface.types import Task
+from typing import Literal, get_args
 
 from dataset_loader.librispeech.librispeech_dataset import LibriSpeechDataset
-
-DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_TASK = ("asr",)
-DEFAULT_DOWNLOAD_URLS = {
-    "dev-clean": "https://openslr.trmal.net/resources/12/dev-clean.tar.gz",
-    "dev-other": "https://openslr.trmal.net/resources/12/dev-other.tar.gz",
-    "test-clean": "https://openslr.trmal.net/resources/12/test-clean.tar.gz",
-    "test-other": "https://openslr.trmal.net/resources/12/test-other.tar.gz",
-    "train-clean-100": "https://openslr.trmal.net/resources/12/train-clean-100.tar.gz",
-    "train-clean-360": "https://openslr.trmal.net/resources/12/train-clean-360.tar.gz",
-    "train-other-500": "https://openslr.trmal.net/resources/12/train-other-500.tar.gz",
-}
-LibriSpeech = Literal[
-    "dev-clean",
-    "dev-other",
-    "test-clean",
-    "test-other",
-    "train-clean-100",
-    "train-clean-360",
-    "train-other-500",
-]
+from dataset_loader.librispeech.constants import (
+    LibriTask,
+    LibriSpeechSet,
+    DEFAULT_SAMPLE_RATE,
+    DEFAULT_TASK,
+    DEFAULT_DOWNLOAD_URLS,
+)
 
 
 class LibriSpeech:
+    """
+    LibriSpeech 데이터셋 로더 및 다운로드 매니저.
+    LibriSpeech 데이터셋은 연속적인 오디오가 아닌 세그먼트로 나눠져 있음을 유의.
+    """
+
     def __init__(self, path: Path | str):
         path = Path(path)
         self.__path = path
@@ -40,7 +28,7 @@ class LibriSpeech:
 
     def download(
         self,
-        names: list[str | LibriSpeech] | Literal["all", "env"] = "all",
+        names: list[str | LibriSpeechSet] | Literal["all", "env"] = "all",
         urls: list[str] | None = None,
     ) -> Path | list[Path]:
         if names == "all":
@@ -90,8 +78,12 @@ class LibriSpeech:
         return target_path
 
     def __load_set(
-        self, name: str, sr: int, task=tuple[Task, ...]
+        self, name: str, sr: int, task=tuple[LibriTask, ...]
     ) -> LibriSpeechDataset:
+        for t in task:
+            if t not in get_args(LibriTask):
+                raise ValueError(f"Task {t} is not compatible with LibriSpeechDataset")
+
         target = self.__path / name
         if not target.exists():
             raise FileNotFoundError(f"LibriSpeech dataset not found at: {target}")
@@ -121,46 +113,39 @@ class LibriSpeech:
         )
 
     def load_train_clean_100(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("train-clean-100", sr=sr, task=task)
 
     def load_train_clean_360(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("train-clean-360", sr=sr, task=task)
 
     def load_train_other_500(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("train-other-500", sr=sr, task=task)
 
     def load_dev_clean(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("dev-clean", sr=sr, task=task)
 
     def load_dev_other(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("dev-other", sr=sr, task=task)
 
     def load_test_clean(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("test-clean", sr=sr, task=task)
 
     def load_test_other(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[Task, ...] = DEFAULT_TASK
+        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
     ) -> LibriSpeechDataset:
         return self.__load_set("test-other", sr=sr, task=task)
 
-
-if __name__ != "__main__":
-    warnings.warn(
-        "[INFO] LibriSpeech 오디오가 연속적이지 않고 세그먼트로 나눠져 있음.",
-        category=UserWarning,
-        stacklevel=2,
-    )
 
 __all__ = ["LibriSpeech", "LibriSpeechDataset"]

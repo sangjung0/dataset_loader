@@ -3,24 +3,35 @@ from typing import TYPE_CHECKING
 
 import os
 
+from typing import get_args
 from pathlib import Path
 from functools import lru_cache
 
 from dataset_loader.esic.algorithm import search_dirs, select_file_from_dir
-from dataset_loader.esic.file_type import VERBATIM, MP4
+from dataset_loader.esic.constants import (
+    ESICTask,
+    ESICDataset,
+    VERBATIM,
+    MP4,
+    DEFAULT_DEV,
+    DEFAULT_DEV2,
+    DEFAULT_TEST,
+    DEFAULT_SAMPLE_RATE,
+    DEFAULT_DOWNLOAD_URL,
+    DEFAULT_TASK,
+)
 from dataset_loader.esic.esic_v1_dataset import ESICv1Dataset
 
 if TYPE_CHECKING:
     pass
 
-DEFAULT_DEV = "v1.1/dev"
-DEFAULT_DEV2 = "v1.1/dev2"
-DEFAULT_TEST = "v1.1/test"
-DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_DOWNLOAD_URL = "https://lindat.mff.cuni.cz/repository/server/api/core/items/45b19770-d58e-45d9-aacd-d19875d1c987/allzip?handleId=11234/1-5415"
-
 
 class ESICv1:
+    """
+    ESIC v1.1 데이터셋 로더 및 다운로드 매니저.
+    ESIC 데이터셋은 연속적인 오디오로 구성되어 있음.
+    """
+
     def __init__(self, root: Path | str):
         root = Path(root)
 
@@ -57,30 +68,15 @@ class ESICv1:
         target.unlink()
         return extracted
 
-    @lru_cache(maxsize=1)
-    def dev_dirs(
-        self, post_path: Path | str = DEFAULT_DEV, excludes: tuple[str] = ()
+    def __get_dirs(
+        self, post_path: Path | str, excludes: tuple[str] = ()
     ) -> list[Path]:
+        if isinstance(post_path, str):
+            if post_path not in get_args(ESICDataset):
+                raise ValueError(
+                    f"post_path must be one of {get_args(ESICDataset)}, but got {post_path}"
+                )
         return search_dirs(self.__root / post_path, excludes=excludes)
-
-    @lru_cache(maxsize=1)
-    def dev2_dirs(
-        self, post_path: Path | str = DEFAULT_DEV2, excludes: tuple[str] = ()
-    ) -> list[Path]:
-        return search_dirs(self.__root / post_path, excludes=excludes)
-
-    @lru_cache(maxsize=1)
-    def test_dirs(
-        self, post_path: Path | str = DEFAULT_TEST, excludes: tuple[str] = ()
-    ) -> list[Path]:
-        return search_dirs(self.__root / post_path, excludes=excludes)
-
-    def all_dirs(self, excludes: tuple[str] = ()) -> list[Path]:
-        return (
-            self.dev_dirs(excludes=excludes)
-            + self.dev2_dirs(excludes=excludes)
-            + self.test_dirs(excludes=excludes)
-        )
 
     def __generate_items(
         self,
@@ -88,6 +84,7 @@ class ESICv1:
         source_file_type: str,
         truth_file_type: str,
         sample_rate: int,
+        task: tuple[ESICTask, ...],
     ) -> ESICv1Dataset:
         X = []
         Y = []
@@ -96,7 +93,7 @@ class ESICv1:
             y = select_file_from_dir(d, truth_file_type)
             X.append(x)
             Y.append(y)
-        return ESICv1Dataset(X, Y, sr=sample_rate)
+        return ESICv1Dataset(X, Y, sr=sample_rate, task=task)
 
     @lru_cache(maxsize=1)
     def dev(
@@ -106,12 +103,14 @@ class ESICv1:
         truth_file_type: str = VERBATIM,
         excludes: tuple[str] = (),
         sample_rate: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[ESICTask, ...] = DEFAULT_TASK,
     ) -> ESICv1Dataset:
         return self.__generate_items(
-            self.dev_dirs(post_path, excludes=excludes),
+            self.__get_dirs(post_path, excludes=excludes),
             source_file_type,
             truth_file_type,
             sample_rate,
+            task,
         )
 
     @lru_cache(maxsize=1)
@@ -122,12 +121,14 @@ class ESICv1:
         truth_file_type: str = VERBATIM,
         excludes: tuple[str] = (),
         sample_rate: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[ESICTask, ...] = DEFAULT_TASK,
     ) -> ESICv1Dataset:
         return self.__generate_items(
-            self.dev2_dirs(post_path, excludes=excludes),
+            self.__get_dirs(post_path, excludes=excludes),
             source_file_type,
             truth_file_type,
             sample_rate,
+            task,
         )
 
     @lru_cache(maxsize=1)
@@ -138,12 +139,14 @@ class ESICv1:
         truth_file_type: str = VERBATIM,
         excludes: tuple[str] = (),
         sample_rate: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[ESICTask, ...] = DEFAULT_TASK,
     ) -> ESICv1Dataset:
         return self.__generate_items(
-            self.test_dirs(post_path, excludes=excludes),
+            self.__get_dirs(post_path, excludes=excludes),
             source_file_type,
             truth_file_type,
             sample_rate,
+            task,
         )
 
 
