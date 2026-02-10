@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "python: run (-O no asserts)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-O", "${file}"],
+      "options": {
+        "envFile": "${workspaceFolder}/.env"
+      },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "python: run (-OO no asserts + no docstrings)",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-OO", "${file}"],
+      "options": {
+        "envFile": "${workspaceFolder}/.env"
+      },
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    },
+    {
+      "label": "pytest: all",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "-q", "--durations=0"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "pytest: pick file",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "-q", "--durations=0", "${input:nodeid}"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "pytest: current file",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "-q", "--durations=0", "${relativeFile}"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "nodeid",
+      "type": "promptString",
+      "description": "테스트할 파일/노드ID 입력 (예: tests/unit/test_foo.py 또는 tests/unit/test_foo.py::TestBar::test_baz)",
+      "default": "tests/unit"
+    }
+  ]
+}
