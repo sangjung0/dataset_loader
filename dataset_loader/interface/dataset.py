@@ -5,7 +5,6 @@ import numpy as np
 
 from abc import ABC, abstractmethod
 from typing import Generator, Any, overload, Sequence
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from dataset_loader.interface.constants import Task
@@ -14,54 +13,56 @@ if TYPE_CHECKING:
 
 
 class Dataset(ABC):
-    def __init__(self, *, task: tuple[Task, ...]):
+    def __init__(self: Dataset, *, task: tuple[Task, ...]):
         self.task = task
 
     @property
-    def args(self) -> dict:
+    def args(self: Dataset) -> dict:
         return {"task": self.task}
 
     @property
     @abstractmethod
-    def length(self) -> int: ...
+    def length(self: Dataset) -> int: ...
 
     @property
-    def name(self) -> str:
+    def name(self: Dataset) -> str:
         return self.__class__.__name__
 
-    def __iter__(self) -> Generator[Sample, Any, None]:
+    def __iter__(self: Dataset) -> Generator[Sample, Any, None]:
         yield from self.iter()
 
     @overload
-    def __getitem__(self, key: int) -> Sample: ...
+    def __getitem__(self: Dataset, key: int) -> Sample: ...
     @overload
-    def __getitem__(self, key: slice) -> Self: ...
+    def __getitem__(self: Dataset, key: slice) -> Dataset: ...
     @overload
-    def __getitem__(self, key: Sequence[int]) -> Self: ...
-    def __getitem__(self, key: int | slice | Sequence[int]) -> Sample | Self:
+    def __getitem__(self: Dataset, key: Sequence[int]) -> Dataset: ...
+    def __getitem__(
+        self: Dataset, key: int | slice | Sequence[int]
+    ) -> Sample | Dataset:
         return self.getitem(key)
 
     @overload
-    def __add__(self, other: Self) -> "ConcatDataset": ...
+    def __add__(self: Dataset, other: Dataset) -> ConcatDataset: ...
     @overload
-    def __add__(self, other: "ConcatDataset") -> "ConcatDataset": ...
-    def __add__(self, other: Self | "ConcatDataset") -> "ConcatDataset":
+    def __add__(self: Dataset, other: ConcatDataset) -> ConcatDataset: ...
+    def __add__(self: Dataset, other: Dataset | ConcatDataset) -> ConcatDataset:
         return self.concat(other)
 
-    def __len__(self) -> int:
+    def __len__(self: Dataset) -> int:
         return self.length
 
-    def iter(self) -> Generator[Sample, Any, None]:
+    def iter(self: Dataset) -> Generator[Sample, Any, None]:
         for idx in range(len(self)):
             yield self.get(idx)
 
     @overload
-    def getitem(self, key: int) -> Sample: ...
+    def getitem(self: Dataset, key: int) -> Sample: ...
     @overload
-    def getitem(self, key: slice) -> Self: ...
+    def getitem(self: Dataset, key: slice) -> Dataset: ...
     @overload
-    def getitem(self, key: Sequence[int]) -> Self: ...
-    def getitem(self, key: int | slice | Sequence[int]) -> Sample | Self:
+    def getitem(self: Dataset, key: Sequence[int]) -> Dataset: ...
+    def getitem(self: Dataset, key: int | slice | Sequence[int]) -> Sample | Dataset:
         if isinstance(key, slice):
             return self.slice(start=key.start, stop=key.stop, step=key.step)
         elif isinstance(key, Sequence):
@@ -77,10 +78,10 @@ class Dataset(ABC):
             raise TypeError("Invalid key type")
 
     @overload
-    def concat(self, other: Self) -> "ConcatDataset": ...
+    def concat(self: Dataset, other: Dataset) -> ConcatDataset: ...
     @overload
-    def concat(self, other: "ConcatDataset") -> "ConcatDataset": ...
-    def concat(self, other: Self | "ConcatDataset") -> "ConcatDataset":
+    def concat(self: Dataset, other: ConcatDataset) -> ConcatDataset: ...
+    def concat(self: Dataset, other: Dataset | ConcatDataset) -> ConcatDataset:
         from dataset_loader.interface.concat_dataset import ConcatDataset
 
         if self.task != other.task:
@@ -92,21 +93,23 @@ class Dataset(ABC):
         else:
             raise TypeError("Invalid type for concatenation")
 
-    def to_dict(self) -> dict:
+    def to_dict(self: Dataset) -> dict:
         return {"task": self.task}
 
     @overload
-    def sample(self, size: int) -> Self: ...
+    def sample(self: Dataset, size: int) -> Dataset: ...
     @overload
-    def sample(self, size: int, start: int) -> Self: ...
+    def sample(self: Dataset, size: int, start: int) -> Dataset: ...
     @overload
-    def sample(self, size: int, start: int, rng: np.random.Generator) -> Self: ...
     def sample(
-        self,
+        self: Dataset, size: int, start: int, rng: np.random.Generator
+    ) -> Dataset: ...
+    def sample(
+        self: Dataset,
         size: int,
         start: int = 0,
         rng: np.random.Generator | np.random.RandomState | None = None,
-    ) -> Self:
+    ) -> Dataset:
         if start < 0 or start >= len(self):
             raise IndexError("Invalid start index")
         elif size <= 0:
@@ -119,27 +122,30 @@ class Dataset(ABC):
         return list(self.iter())
 
     @abstractmethod
-    def select(self, indices: Sequence[int]) -> Self: ...
+    def select(self: Dataset, indices: Sequence[int]) -> Dataset: ...
 
     @abstractmethod
     def slice(
-        self, start: int | None = None, stop: int | None = None, step: int | None = None
-    ) -> Self: ...
+        self: Dataset,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
+    ) -> Dataset: ...
 
     @abstractmethod
-    def get(self, idx: int) -> Sample: ...
+    def get(self: Dataset, idx: int) -> Sample: ...
 
     @abstractmethod
     def _sample(
-        self,
+        self: Dataset,
         size: int,
         start: int = 0,
         rng: np.random.Generator | np.random.RandomState | None = None,
-    ) -> Self: ...
+    ) -> Dataset: ...
 
-    @staticmethod
+    @classmethod
     @abstractmethod
-    def from_dict(data: dict) -> Self:
+    def from_dict(cls: type[Dataset], data: dict) -> Dataset:
         raise NotImplementedError
 
 

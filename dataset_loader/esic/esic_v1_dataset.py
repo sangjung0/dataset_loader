@@ -1,10 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 import numpy as np
 
 from pathlib import Path
-from typing_extensions import override, Self
+from typing_extensions import override
 from typing import Sequence, get_args
 
 from sjpy.audio import load_from_mp4_file
@@ -15,15 +14,14 @@ from dataset_loader.interface import Dataset, Sample
 
 from dataset_loader.esic.constants import ESICTask, DEFAULT_TASK
 
-if TYPE_CHECKING:
-    pass
 
 DEFAULT_SAMPLE_RATE = 16_000
 
 
 class ESICv1Dataset(Dataset):
     def __init__(
-        self,
+        self: ESICv1Dataset,
+        *,
         X: list[Path],
         Y: list[Path],
         sr: int = DEFAULT_SAMPLE_RATE,
@@ -41,7 +39,7 @@ class ESICv1Dataset(Dataset):
 
     @Dataset.args.getter
     @override
-    def args(self) -> dict:
+    def args(self: ESICv1Dataset) -> dict:
         return {
             **super().args,
             "X": self._X,
@@ -51,19 +49,19 @@ class ESICv1Dataset(Dataset):
 
     @Dataset.length.getter
     @override
-    def length(self) -> int:
+    def length(self: ESICv1Dataset) -> int:
         return len(self._X)
 
     @property
-    def sr(self) -> int:
+    def sr(self: ESICv1Dataset) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self, value: int):
+    def sr(self: ESICv1Dataset, value: int) -> None:
         self._sr = value
 
     @override
-    def to_dict(self) -> dict:
+    def to_dict(self: ESICv1Dataset) -> dict:
         return {
             **super().to_dict(),
             "X": [str(x) for x in self._X],
@@ -72,21 +70,30 @@ class ESICv1Dataset(Dataset):
         }
 
     @override
-    def select(self, indices: Sequence[int]) -> Self:
+    def select(self: ESICv1Dataset, indices: Sequence[int]) -> ESICv1Dataset:
         return ESICv1Dataset(
-            [self._X[i] for i in indices], [self._Y[i] for i in indices], sr=self._sr
+            X=[self._X[i] for i in indices],
+            Y=[self._Y[i] for i in indices],
+            sr=self.sr,
+            task=self.task,
         )
 
     @override
     def slice(
-        self, start: int | None = None, stop: int | None = None, step: int | None = None
-    ) -> Self:
+        self: ESICv1Dataset,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
+    ) -> ESICv1Dataset:
         return ESICv1Dataset(
-            self._X[start:stop:step], self._Y[start:stop:step], sr=self._sr
+            X=self._X[start:stop:step],
+            Y=self._Y[start:stop:step],
+            sr=self.sr,
+            task=self.task,
         )
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self: ESICv1Dataset, idx: int) -> Sample:
         x, y = self._X[idx], self._Y[idx]
 
         def load_audio() -> np.ndarray:
@@ -96,30 +103,30 @@ class ESICv1Dataset(Dataset):
         sid = normalize_text_only_en(str(Path(*x.parts[-3:-1])))[-255:]
         return Sample(id=sid, data={"load_audio_func": load_audio, "ref": ref})
 
-    def save(self, path: Path, description="ESICv1Dataset"):
+    def save(self: ESICv1Dataset, path: Path, description="ESICv1Dataset"):
         JsonSaver(description).save(self.to_dict(), path)
 
     @override
     def _sample(
-        self,
+        self: ESICv1Dataset,
         size: int,
         start: int = 0,
         rng: np.random.Generator | np.random.RandomState | None = None,
-    ) -> Self:
+    ) -> ESICv1Dataset:
         if rng is None or size == len(self._X) - start:
             return self.slice(start, start + size)
         else:
             data = list(zip(self._X[start:], self._Y[start:]))
             data = rng.choice(data, size=size, replace=False)
             X, Y = zip(*data)
-            return ESICv1Dataset(X, Y, self._sr)
+            return ESICv1Dataset(X=list(X), Y=list(Y), sr=self.sr, task=self.task)
 
-    @staticmethod
+    @classmethod
     @override
-    def from_dict(data: dict) -> Self:
+    def from_dict(cls: type[ESICv1Dataset], data: dict) -> ESICv1Dataset:
         return ESICv1Dataset(
-            [Path(x) for x in data["X"]],
-            [Path(y) for y in data["Y"]],
+            X=[Path(x) for x in data["X"]],
+            Y=[Path(y) for y in data["Y"]],
             sr=data["sr"],
             task=data.get("task", DEFAULT_TASK),
         )

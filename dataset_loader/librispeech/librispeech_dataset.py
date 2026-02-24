@@ -13,7 +13,7 @@ from dataset_loader.librispeech.constants import LibriTask
 
 class LibriSpeechDataset(Dataset):
     def __init__(
-        self,
+        self: LibriSpeechDataset,
         ids: list[str],
         audio_paths: list[Path],
         references: list[str],
@@ -36,7 +36,7 @@ class LibriSpeechDataset(Dataset):
 
     @Dataset.args.getter
     @override
-    def args(self) -> dict:
+    def args(self: LibriSpeechDataset) -> dict:
         return {
             **super().args,
             "ids": self._ids,
@@ -47,19 +47,19 @@ class LibriSpeechDataset(Dataset):
 
     @Dataset.length.getter
     @override
-    def length(self) -> int:
+    def length(self: LibriSpeechDataset) -> int:
         return len(self._ids)
 
     @property
-    def sr(self) -> int:
+    def sr(self: LibriSpeechDataset) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self, value: int):
+    def sr(self: LibriSpeechDataset, value: int):
         self._sr = value
 
     @override
-    def to_dict(self) -> dict:
+    def to_dict(self: LibriSpeechDataset) -> dict:
         return {
             **super().to_dict(),
             "ids": self._ids,
@@ -69,7 +69,7 @@ class LibriSpeechDataset(Dataset):
         }
 
     @override
-    def select(self, indices: Sequence[int]) -> Self:
+    def select(self: LibriSpeechDataset, indices: Sequence[int]) -> Self:
         return LibriSpeechDataset(
             [self._ids[i] for i in indices],
             [self._audio_paths[i] for i in indices],
@@ -80,7 +80,10 @@ class LibriSpeechDataset(Dataset):
 
     @override
     def slice(
-        self, start: int | None = None, stop: int | None = None, step: int | None = None
+        self: LibriSpeechDataset,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
     ) -> Self:
         return LibriSpeechDataset(
             self._ids[start:stop:step],
@@ -91,7 +94,7 @@ class LibriSpeechDataset(Dataset):
         )
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self: LibriSpeechDataset, idx: int) -> Sample:
         _id = self._ids[idx]
         audio_path = self._audio_paths[idx]
         reference = self._references[idx]
@@ -101,14 +104,14 @@ class LibriSpeechDataset(Dataset):
 
         return Sample(id=_id, data={"load_audio_func": load_audio, "ref": reference})
 
-    def save(self, path: Path, description="LibriSpeechDataset"):
+    def save(self: LibriSpeechDataset, path: Path, description="LibriSpeechDataset"):
         from sjpy.file.json import JsonSaver
 
         JsonSaver(description).save(self.to_dict(), path)
 
     @override
     def _sample(
-        self,
+        self: LibriSpeechDataset,
         size: int,
         start: int = 0,
         rng: np.random.Generator | np.random.RandomState | None = None,
@@ -127,10 +130,10 @@ class LibriSpeechDataset(Dataset):
             ids, audio_paths, references = zip(*data)
             return LibriSpeechDataset(ids, audio_paths, references, self._sr, self.task)
 
-    @staticmethod
+    @classmethod
     @override
-    def from_dict(data: dict) -> Self:
-        return LibriSpeechDataset(
+    def from_dict(cls: type[LibriSpeechDataset], data: dict) -> Self:
+        return cls(
             ids=data["ids"],
             audio_paths=[Path(p) for p in data["audio_paths"]],
             references=data["references"],

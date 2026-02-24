@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from typing import Sequence, TypeVar, Generic
-from typing_extensions import override, Self
+from typing_extensions import override
 
 from dataset_loader.interface.dataset import Dataset
 
@@ -15,7 +15,7 @@ T = TypeVar("T", bound="Dataset")
 
 
 class ConcatDataset(Dataset, Generic[T]):
-    def __init__(self, *, datasets: list[T], **kwargs):
+    def __init__(self: ConcatDataset, *, datasets: list[T], **kwargs):
         if len(datasets) == 0:
             raise ValueError("At least one dataset is required")
 
@@ -33,25 +33,25 @@ class ConcatDataset(Dataset, Generic[T]):
 
     @Dataset.args.getter
     @override
-    def args(self):
+    def args(self: ConcatDataset) -> dict:
         return {**super().args, "datasets": self._datasets}
 
     @Dataset.length.getter
     @override
-    def length(self) -> int:
+    def length(self: ConcatDataset) -> int:
         return sum(len(ds) for ds in self._datasets)
 
     @override
-    def concat(self, other: Dataset | Self) -> Self:
+    def concat(self: ConcatDataset, other: Dataset | ConcatDataset) -> ConcatDataset:
         if isinstance(other, ConcatDataset):
-            return ConcatDataset(self._datasets + other._datasets)
+            return ConcatDataset(datasets=self._datasets + other._datasets)
         elif isinstance(other, Dataset):
-            return ConcatDataset(self._datasets + [other])
+            return ConcatDataset(datasets=self._datasets + [other])
         else:
             raise TypeError("Invalid type for concatenation")
 
     @override
-    def to_dict(self) -> dict:
+    def to_dict(self: ConcatDataset) -> dict:
         return {
             **super().to_dict(),
             "datasets": [ds.to_dict() for ds in self._datasets],
@@ -60,7 +60,7 @@ class ConcatDataset(Dataset, Generic[T]):
         }
 
     @override
-    def select(self, indices: Sequence[int]) -> Self:
+    def select(self: ConcatDataset, indices: Sequence[int]) -> ConcatDataset:
         selected_datasets = []
         start = 0
         for ds in self._datasets:
@@ -72,8 +72,11 @@ class ConcatDataset(Dataset, Generic[T]):
 
     @override
     def slice(
-        self, start: int | None = None, stop: int | None = None, step: int | None = None
-    ) -> Self:
+        self: ConcatDataset,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
+    ) -> ConcatDataset:
         start = start if start is not None else 0
         stop = stop if stop is not None else len(self)
         step = step if step is not None else 1
@@ -88,7 +91,7 @@ class ConcatDataset(Dataset, Generic[T]):
         return self.select(list(range(start, stop, step)))
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self: ConcatDataset, idx: int) -> Sample:
         start = 0
         for ds in self._datasets:
             d_idx = idx - start
@@ -99,7 +102,7 @@ class ConcatDataset(Dataset, Generic[T]):
 
     @override
     def _sample(
-        self,
+        self: ConcatDataset,
         size: int,
         start: int = 0,
         rng: np.random.Generator | np.random.RandomState | None = None,
@@ -110,7 +113,7 @@ class ConcatDataset(Dataset, Generic[T]):
 
     @classmethod
     @override
-    def from_dict(cls, data: dict) -> Self:
+    def from_dict(cls: type[ConcatDataset], data: dict) -> ConcatDataset:
         import sys
         from importlib import import_module
         from functools import reduce

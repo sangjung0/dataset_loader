@@ -20,8 +20,8 @@ fi
 echo "[INFO] step 1/5: change ownership to ${CONTAINER_USER}"
 sudo bash "${CONTAINER_WORK_DIR}/.devcontainer/sjsh/root/change_owner.sh" "${CONTAINER_USER}" \
   --target "${CONTAINER_HOME}" \
-  --target "${CONTAINER_WORK_DIR}:${CONTAINER_WORK_DIR}/.datasets" \
-  --target "${CONTAINER_WORK_DIR}/.datasets:${CONTAINER_WORK_DIR}/.datasets/pills:${CONTAINER_WORK_DIR}/.datasets/ILSVRC:${CONTAINER_WORK_DIR}/.datasets/asr-rankformer-datasets"
+  --target "${CONTAINER_WORK_DIR}" \
+  --target "${CONTAINER_HOME}/.datasets:${CONTAINER_HOME}/.datasets/pills:${CONTAINER_HOME}/.datasets/ILSVRC:${CONTAINER_HOME}/.datasets/asr-rankformer-datasets"
 
 echo "[INFO] step 2/5: sync uv"
 bash "${CONTAINER_WORK_DIR}/.devcontainer/sjsh/common/wait_for_dir.sh" "${CONTAINER_WORK_DIR}/.venv"
@@ -32,9 +32,9 @@ source "${CONTAINER_WORK_DIR}/.venv/bin/activate"
 # lhotse install-sph2pipe
 
 echo "[INFO] step 4/5: link datasets"
-ln -sfn "${CONTAINER_DATA_DIR}/.datasets" "${CONTAINER_WORK_DIR}/.datasets"
+ln -sfn "${CONTAINER_HOME}/.datasets" "${CONTAINER_WORK_DIR}/.shortcuts/.datasets"
 
 echo "[INFO] step 5/5: link storage"
-ln -sfn "${CONTAINER_DATA_DIR}/.storage" "${CONTAINER_WORK_DIR}/.storage"
+ln -sfn "${CONTAINER_HOME}/.storage" "${CONTAINER_WORK_DIR}/.shortcuts/.storage"
 
 echo "[INFO] post-create command completed successfully."

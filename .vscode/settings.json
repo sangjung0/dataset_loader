@@ -17,8 +17,7 @@
     "**/output": true,
     "**/log": true,
     "**/.venv/**": true,
-    ".datasets": true,
-    ".storage": true
+    ".shortcuts/**": true
   },
   "files.watcherExclude": {
     "**/.git/objects/**": true,
@@ -26,8 +25,7 @@
     "**/.hg/store/**": true,
     "**/.venv/**": true,
     "**/__pycache__/**": true,
-    ".datasets/**": true,
-    ".storage/**": true
+    ".shortcuts/**": true
   },
   "python.analysis.exclude": [
     "**/.git",
@@ -36,8 +34,7 @@
     "**/output",
     "**/log",
     "**/.venv",
-    ".datasets",
-    ".storage"
+    ".shortcuts"
   ],
   "python.analysis.extraPaths": ["./modules/sjpy"],
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",

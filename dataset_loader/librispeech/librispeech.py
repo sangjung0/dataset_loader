@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 import os
 
 from pathlib import Path
 from typing import Literal, get_args
+from functools import lru_cache
+
+from dataset_loader.interface import DatasetLoader
 
 from dataset_loader.librispeech.librispeech_dataset import LibriSpeechDataset
 from dataset_loader.librispeech.constants import (
@@ -13,21 +18,17 @@ from dataset_loader.librispeech.constants import (
 )
 
 
-class LibriSpeech:
+class LibriSpeech(DatasetLoader):
     """
     LibriSpeech 데이터셋 로더 및 다운로드 매니저.
     LibriSpeech 데이터셋은 연속적인 오디오가 아닌 세그먼트로 나눠져 있음을 유의.
     """
 
-    def __init__(self, path: Path | str):
-        path = Path(path)
-        self.__path = path
-
-    def download_urls(self) -> dict[str, str]:
+    def download_urls(self: LibriSpeech) -> dict[str, str]:
         return DEFAULT_DOWNLOAD_URLS.copy()
 
     def download(
-        self,
+        self: LibriSpeech,
         names: list[str | LibriSpeechSet] | Literal["all", "env"] = "all",
         urls: list[str] | None = None,
     ) -> Path | list[Path]:
@@ -59,12 +60,12 @@ class LibriSpeech:
 
         return [self._download(name, url) for name, url in args]
 
-    def _download(self, name: str, url: str) -> Path:
+    def _download(self: LibriSpeech, name: str, url: str) -> Path:
         from sjpy.download import download
         from sjpy.archive.tar import extract_tar
         from sjpy.file.algorithm import move_dir_contents
 
-        target_path = self.__path / name
+        target_path = self.path / name
         if list(target_path.glob("*")):
             return target_path
 
@@ -72,19 +73,19 @@ class LibriSpeech:
         # downloaded = Path("/tmp/temp_efa914241bdc425fb5dc366931490768")
         extract_tar(downloaded, target_path.parent)
         downloaded.unlink()
-        move_dir_contents(target_path.parent / "LibriSpeech", self.__path)
+        move_dir_contents(target_path.parent / "LibriSpeech", self.path)
         (target_path.parent / "LibriSpeech").rmdir()
 
         return target_path
 
     def __load_set(
-        self, name: str, sr: int, task=tuple[LibriTask, ...]
+        self: LibriSpeech, name: str, sr: int, task=tuple[LibriTask, ...]
     ) -> LibriSpeechDataset:
         for t in task:
             if t not in get_args(LibriTask):
                 raise ValueError(f"Task {t} is not compatible with LibriSpeechDataset")
 
-        target = self.__path / name
+        target = self.path / name
         if not target.exists():
             raise FileNotFoundError(f"LibriSpeech dataset not found at: {target}")
 
@@ -113,39 +114,53 @@ class LibriSpeech:
         )
 
     def load_train_clean_100(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("train-clean-100", sr=sr, task=task)
 
     def load_train_clean_360(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("train-clean-360", sr=sr, task=task)
 
     def load_train_other_500(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("train-other-500", sr=sr, task=task)
 
     def load_dev_clean(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("dev-clean", sr=sr, task=task)
 
     def load_dev_other(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("dev-other", sr=sr, task=task)
 
     def load_test_clean(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("test-clean", sr=sr, task=task)
 
     def load_test_other(
-        self, sr: int = DEFAULT_SAMPLE_RATE, task: tuple[LibriTask, ...] = DEFAULT_TASK
+        self: LibriSpeech,
+        sr: int = DEFAULT_SAMPLE_RATE,
+        task: tuple[LibriTask, ...] = DEFAULT_TASK,
     ) -> LibriSpeechDataset:
         return self.__load_set("test-other", sr=sr, task=task)
 
 
-__all__ = ["LibriSpeech", "LibriSpeechDataset"]
+__all__ = ["LibriSpeech"]
