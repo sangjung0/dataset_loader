@@ -24,10 +24,24 @@
       "presentation": { "reveal": "always", "panel": "dedicated" }
     },
     {
+      "label": "python: clean pycache",
+      "type": "shell",
+      "command": "find . -type d -name '__pycache__' -prune -exec rm -rf {} + && find . -type f -name '*.py[co]' -delete",
+      "problemMatcher": []
+    },
+    {
       "label": "pytest: all",
       "type": "shell",
       "command": "${workspaceFolder}/.venv/bin/python",
       "args": ["-m", "pytest", "-q", "--durations=0"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "pytest: all -v",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "pytest", "-q", "--durations=0", "-v"],
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "shared", "clear": true }
     },
