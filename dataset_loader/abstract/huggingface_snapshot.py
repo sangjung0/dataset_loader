@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing_extensions import override
 from huggingface_hub import snapshot_download
-from datasets import load_dataset
+from datasets import load_dataset, DatasetDict
 
 from dataset_loader.interface import DatasetLoader
 
@@ -47,7 +47,9 @@ class HuggingfaceSnapshot(DatasetLoader):
         return snapshot_download(**snapshot_options)
 
     @override
-    def load(self: HuggingfaceSnapshot, name: str, load_options: dict | None = None):
+    def load(
+        self: HuggingfaceSnapshot, name: str, load_options: dict | None = None
+    ) -> DatasetDict:
         default_options = {
             "path": "parquet",
             "data_files": {name: f"{self.path}/*.parquet"},

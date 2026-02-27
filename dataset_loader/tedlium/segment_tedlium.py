@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from typing_extensions import override
+from datasets import Audio
+
 from dataset_loader.abstract import HuggingfaceSnapshot
 
 from dataset_loader.tedlium.segment_tedlium_dataset import SegmentTedliumDataset
@@ -20,6 +23,16 @@ class SegmentTedlium(HuggingfaceSnapshot):
     ):
         super().__init__(repo_id=repo_id, dir_name=dir_name, path=path)
 
+    @override
+    def load(
+        self: SegmentTedlium,
+        name: str,
+        load_options: dict | None = None,
+    ):
+        dataset_dict = super().load(name, load_options=load_options)
+        dataset = dataset_dict[name]
+        return dataset
+
     def train(
         self: SegmentTedlium,
         *,
@@ -27,14 +40,14 @@ class SegmentTedlium(HuggingfaceSnapshot):
         use_cache: int = 0,
         ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
     ):
-        dataset = super().load(
+        dataset = self.load(
             "train",
             load_options={
                 "data_files": {
                     "train": f"{self.path}/release3/train/*.parquet",
                 },
             },
-        )["train"]
+        )
 
         return SegmentTedliumDataset(
             dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
@@ -47,14 +60,14 @@ class SegmentTedlium(HuggingfaceSnapshot):
         use_cache: int = 0,
         ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
     ):
-        dataset = super().load(
+        dataset = self.load(
             "validation",
             load_options={
                 "data_files": {
                     "validation": f"{self.path}/release3/validation/*.parquet",
                 },
             },
-        )["validation"]
+        )
 
         return SegmentTedliumDataset(
             dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
@@ -67,14 +80,14 @@ class SegmentTedlium(HuggingfaceSnapshot):
         use_cache: int = 0,
         ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
     ):
-        dataset = super().load(
+        dataset = self.load(
             "test",
             load_options={
                 "data_files": {
                     "test": f"{self.path}/release3/test/*.parquet",
                 },
             },
-        )["test"]
+        )
         return SegmentTedliumDataset(
             dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
         )

@@ -8,7 +8,7 @@ from functools import cached_property
 from dataset_loader.interface.sample import Sample
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class ASRSample:
     sample: Sample = field(compare=False, hash=False, repr=False)
 
