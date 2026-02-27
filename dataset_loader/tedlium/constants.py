@@ -1,18 +1,33 @@
+from __future__ import annotations
+
 from typing import Literal
 
-# Types
-TedliumTask = Literal["asr", "diarization"]
+# Defaults Segment Tedlium
+DEFAULT_SEGMENT_REPO_ID = "distil-whisper/tedlium"
+DEFAULT_SEGMENT_SAMPLE_RATE = 16_000
+DEFAULT_SEGMENT_IGNORE_SET = [
+    "ignore_time_segment_in_scoring",
+    "inter_segment_gap",
+    "<unk>",
+]
 
-# Defaults
-DEFAULT_REPO_ID = "distil-whisper/tedlium"
+# Defaults Tedlium
+TedliumSet = Literal["train", "dev", "test"]
 DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_IGNORE_SET = set(("ignore_time_segment_in_scoring", "inter_segment_gap"))
-DEFAULT_TASK = ("asr",)
+DEFAULT_IGNORE_SET = ["ignore_time_segment_in_scoring", "inter_segment_gap", "<unk>"]
+DATA_PARQUET = {
+    "train": "train.parquet",
+    "dev": "dev.parquet",
+    "test": "test.parquet",
+}
+
 
 __all__ = [
-    "TedliumTask",
-    "DEFAULT_REPO_ID",
+    "DEFAULT_SEGMENT_REPO_ID",
+    "DEFAULT_SEGMENT_SAMPLE_RATE",
+    "DEFAULT_SEGMENT_IGNORE_SET",
+    "TedliumSet",
     "DEFAULT_SAMPLE_RATE",
     "DEFAULT_IGNORE_SET",
-    "DEFAULT_TASK",
+    "DATA_PARQUET",
 ]

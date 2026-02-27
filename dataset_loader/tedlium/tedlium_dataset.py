@@ -1,53 +1,33 @@
 from __future__ import annotations
+import re
 
+import librosa
 import numpy as np
+import pandas as pd
 
-from typing import get_args
+from typing import Sequence
 from typing_extensions import override
-from datasets import Dataset as DT, Audio
 
-from sjpy.string import remove_spaces_and_symbols
-
-from dataset_loader.interface import Sample, Dataset
-
-from dataset_loader.tedlium.constants import TedliumTask
+from dataset_loader.interface import Sample
+from dataset_loader.abstract import ParquetDataset
 
 
-class TedliumDataset(Dataset):
+class TedliumDataset(ParquetDataset):
     def __init__(
         self: TedliumDataset,
         *,
-        dataset: DT,
+        parquet: pd.DataFrame,
         sr: int,
-        task: tuple[TedliumTask, ...],
-        ignore_set: set[str],
-        _pdataset: list[dict] | None = None,
+        use_cache: int = 0,
+        ignore_set: Sequence[str] = [],
     ):
-        for t in task:
-            if t not in get_args(TedliumTask):
-                raise ValueError(f"Invalid task: {t}")
-        super().__init__(task=task)
-
-        self._dataset = dataset
+        super().__init__(parquet=parquet, use_cache=use_cache)
         self._sr = sr
-        self._ignore_set = ignore_set
-        self._pdataset = self.__prepare(dataset) if _pdataset is None else _pdataset
+        self._ignore_set = list(ignore_set)
 
-    @Dataset.args.getter
-    @override
-    def args(self: TedliumDataset) -> dict:
-        return {
-            **super().args,
-            "dataset": self._dataset,
-            "sr": self._sr,
-            "ignore_set": self._ignore_set,
-            "_pdataset": self._pdataset,
-        }
-
-    @Dataset.length.getter
-    @override
-    def length(self: TedliumDataset) -> int:
-        return len(self._pdataset)
+    @ParquetDataset.args.getter
+    def args(self):
+        return {**super().args, "ignore_set": self._ignore_set, "sr": self._sr}
 
     @property
     def sr(self: TedliumDataset) -> int:
@@ -55,136 +35,35 @@ class TedliumDataset(Dataset):
 
     @sr.setter
     def sr(self: TedliumDataset, value: int) -> None:
-        self._sr = value
-        self._dataset = self._dataset.cast_column("audio", Audio(sampling_rate=value))
-
-    @override
-    def to_dict(self: TedliumDataset) -> dict:
-        return {
-            **super().to_dict(),
-            "dataset": self._dataset,
-            "sr": self._sr,
-            "ignore_set": self._ignore_set,
-            "_pdataset": self._pdataset,
-        }
-
-    @override
-    def select(self: TedliumDataset, indices: list[int]) -> TedliumDataset:
-        selected_dataset = [self._pdataset[i] for i in indices]
-        return TedliumDataset(
-            dataset=self._dataset,
-            sr=self._sr,
-            task=self.task,
-            ignore_set=self._ignore_set,
-            _pdataset=selected_dataset,
-        )
-
-    @override
-    def slice(
-        self: TedliumDataset,
-        start: int | None = None,
-        stop: int | None = None,
-        step: int | None = None,
-    ) -> TedliumDataset:
-        sliced_dataset = self._pdataset[start:stop:step]
-        return TedliumDataset(
-            dataset=self._dataset,
-            sr=self._sr,
-            task=self.task,
-            ignore_set=self._ignore_set,
-            _pdataset=sliced_dataset,
-        )
-
-    @override
-    def _sample(
-        self: TedliumDataset,
-        size: int,
-        start: int = 0,
-        rng: np.random.Generator | np.random.RandomState | None = None,
-    ) -> Sample:
-        if rng is None or size == len(self) - start:
-            return self.slice(start, start + size)
+        if isinstance(value, int) and value > 0:
+            self._sr = value
         else:
-            indices = range(len(self))[start:]
-            index = rng.choice(indices, size=size, replace=False)
-            return self.select(index)
-
-    def __prepare(self: TedliumDataset, dataset: DT) -> list[dict]:
-        file_pairs: dict[str, list[dict]] = {}
-        for data in dataset:
-            file = data["file"]
-            if file not in file_pairs:
-                file_pairs[file] = []
-            file_pairs[file].append(data)
-
-        for value in file_pairs.values():
-            value.sort(key=lambda x: x["audio"].metadata.stream_index)
-
-        pdataset = []
-        for file, data_list in file_pairs.items():
-            _id = remove_spaces_and_symbols(file)[-255:]
-
-            speaker_info = []
-            audios = []
-            text = ""
-            for data in data_list:
-                infos = data["id"].split("-")
-                speaker_info.append(
-                    {
-                        "start": float(infos[1]),
-                        "end": float(infos[2]),
-                        "label": data["speaker_id"],
-                        "gender": data["gender"],
-                    }
-                )
-                audios.append(data["audio"])
-                t = data["text"]
-                if t not in self._ignore_set:
-                    text += data["text"] + " "
-            text = text[:-1]
-
-            pdataset.append(
-                {
-                    "id": _id,
-                    "file": file,
-                    "audios": audios,
-                    "text": text,
-                    "speaker_info": speaker_info,
-                }
-            )
-
-        return pdataset
+            raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def get(self, idx: int) -> Sample:
-        data = self._pdataset[idx]
+    def _get(self: TedliumDataset, idx: int) -> Sample:
+        data = self._parquet.iloc[idx].to_dict()
 
-        def load_audio_func():
-            audios = data["audios"]
-            sample = audios[0].get_all_samples()
-            sr = sample.sample_rate
-            wav_list = [sample.data.mean(dim=0).detach().cpu().numpy()]
-            for audio in audios[1:]:
-                samples = audio.get_all_samples()
-                if samples.sample_rate != sr:
-                    raise ValueError("Sampling rate mismatch")
-                wav_list.append(samples.data.mean(dim=0).detach().cpu().numpy())
-            return np.hstack(wav_list)
+        def load_audio_func() -> np.ndarray:
+            audio_path = data["audio_path"]
+            wav, _ = librosa.load(audio_path, sr=self._sr)
+            return wav
+
+        diarization = data.pop("stm")
+        ref = data["text"]
+        for ignore in self._ignore_set:
+            ref = re.sub(rf"{re.escape(ignore)}\s*", "", ref)
+        ref = ref.strip()
+        _id = data.pop("id")
 
         result = {
             "load_audio_func": load_audio_func,
-            "file": data["file"],
-            "ref": data["text"],
-            "diarization": data["speaker_info"],
+            "ref": ref,
+            "diarization": diarization,
+            **data,
         }
 
-        return Sample(id=data["id"], data=result)
-
-    @classmethod
-    @override
-    def from_dict(cls: type[TedliumDataset], data: dict) -> TedliumDataset:
-        data["dataset"] = DT.from_dict(data["dataset"])
-        return cls(**data)
+        return Sample(id=_id, data=result)
 
 
 __all__ = ["TedliumDataset"]

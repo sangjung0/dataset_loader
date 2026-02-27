@@ -1,95 +1,126 @@
 from __future__ import annotations
 
-from dataset_loader.abstract import HuggingfaceSnapshot
+import pandas as pd
 
-from dataset_loader.tedlium.segment_tedlium_dataset import SegmentTedliumDataset
+from typing import Sequence
+from typing_extensions import override
+
+from dataset_loader.abstract import ParquetLoader
+
 from dataset_loader.tedlium.tedlium_dataset import TedliumDataset
+
 from dataset_loader.tedlium.constants import (
-    DEFAULT_REPO_ID,
     DEFAULT_SAMPLE_RATE,
     DEFAULT_IGNORE_SET,
-    DEFAULT_TASK,
-    TedliumTask,
+    DATA_PARQUET,
+    TedliumSet,
 )
 
 
-class Tedlium(HuggingfaceSnapshot):
+class Tedlium(ParquetLoader):
+    """
+    Tedlium 데이터셋 로더.
+    Tedlium 데이터셋은 연속적인 오디오로 구성되어 있음.
+    """
+
     def __init__(
         self: Tedlium,
         *,
-        repo_id: str = DEFAULT_REPO_ID,
         dir_name: str | None = None,
         path: str | None = None,
+        parquet_name_and_path: dict[str, str] | None = None,
     ):
-        super().__init__(repo_id=repo_id, dir_name=dir_name, path=path)
+        if parquet_name_and_path is None:
+            parquet_name_and_path = DATA_PARQUET
+        super().__init__(
+            dir_name=dir_name, path=path, parquet_name_and_path=parquet_name_and_path
+        )
+
+    @override
+    def download(self: Tedlium, *args, **kwargs):
+        raise NotImplementedError(
+            "Tedlium dataset is not available for download. Please download it manually from the official website and place it in the specified directory."
+        )
+
+    @override
+    def load(
+        self: Tedlium, *, name: TedliumSet, prepare_dir: str = ".prepare"
+    ) -> pd.DataFrame:
+        data = super().load(name=name, prepare_dir=prepare_dir)
+        data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)
+        return data
+
+    @override
+    def _parse_files(
+        self: Tedlium,
+        *,
+        name: str,
+        verbose: bool = False,
+    ) -> list[dict[str, str]]:
+        from dataset_loader.tedlium.algorithm import (
+            parse_ctl_hashes,
+            parse_files,
+        )
+
+        if name == "train":
+            path = self.path / "TEDLIUM_release-3/data"
+            sph_hash = parse_ctl_hashes(path / "ctl" / "sph_md5sum")
+            stm_hash = parse_ctl_hashes(path / "ctl" / "stm_md5sum")
+            return parse_files(
+                path / "sph",
+                path / "stm",
+                sph_hash=sph_hash,
+                stm_hash=stm_hash,
+                verbose=verbose,
+                dataset_path=self.path,
+            )
+        else:
+            path = self.path / f"TEDLIUM_release-3/legacy/{name}"
+            return parse_files(
+                path / "sph",
+                path / "stm",
+                verbose=verbose,
+                dataset_path=self.path,
+            )
 
     def train(
         self: Tedlium,
         *,
-        segment: bool = False,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[TedliumTask, ...] = DEFAULT_TASK,
-        ignore_set: set[str] = DEFAULT_IGNORE_SET,
+        prepare_dir: str = ".prepare",
+        use_cache: int = 0,
+        ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
     ):
-        dataset = super().load(
-            "train",
-            load_options={
-                "data_files": {
-                    "train": f"{self.path}/release3/train/*.parquet",
-                },
-            },
-        )["train"]
+        data = self.load(name="train", prepare_dir=prepare_dir)
+        return TedliumDataset(
+            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
+        )
 
-        if segment:
-            return SegmentTedliumDataset(
-                dataset=dataset, sr=sr, task=task, ignore_set=ignore_set
-            )
-        return TedliumDataset(dataset=dataset, sr=sr, task=task, ignore_set=ignore_set)
-
-    def validation(
-        self,
+    def dev(
+        self: Tedlium,
         *,
-        segment: bool = False,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[TedliumTask, ...] = DEFAULT_TASK,
-        ignore_set: set[str] = DEFAULT_IGNORE_SET,
+        prepare_dir: str = ".prepare",
+        use_cache: int = 0,
+        ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
     ):
-        dataset = super().load(
-            "validation",
-            load_options={
-                "data_files": {
-                    "validation": f"{self.path}/release3/validation/*.parquet",
-                },
-            },
-        )["validation"]
-
-        if segment:
-            return SegmentTedliumDataset(
-                dataset=dataset, sr=sr, task=task, ignore_set=ignore_set
-            )
-        return TedliumDataset(dataset=dataset, sr=sr, task=task, ignore_set=ignore_set)
+        data = self.load(name="dev", prepare_dir=prepare_dir)
+        return TedliumDataset(
+            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
+        )
 
     def test(
-        self,
+        self: Tedlium,
         *,
-        segment: bool = False,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[TedliumTask, ...] = DEFAULT_TASK,
-        ignore_set: set[str] = DEFAULT_IGNORE_SET,
+        prepare_dir: str = ".prepare",
+        use_cache: int = 0,
+        ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
     ):
-        dataset = super().load(
-            "test",
-            load_options={
-                "data_files": {
-                    "test": f"{self.path}/release3/test/*.parquet",
-                },
-            },
-        )["test"]
-        if segment:
-            return SegmentTedliumDataset(
-                dataset=dataset, sr=sr, task=task, ignore_set=ignore_set
-            )
-        return TedliumDataset(dataset=dataset, sr=sr, task=task, ignore_set=ignore_set)
+        data = self.load(name="test", prepare_dir=prepare_dir)
+        return TedliumDataset(
+            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
+        )
 
 
 __all__ = ["Tedlium"]

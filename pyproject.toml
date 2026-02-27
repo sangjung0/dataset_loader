@@ -5,9 +5,7 @@ description = "Custom dataset loader"
 readme = "README.md"
 requires-python = "==3.10.*"
 dependencies = [
-    "faster-whisper==1.2.0",
     "ffmpeg-python>=0.2.0",
-    "lhotse>=1.31.1",
     "librosa>=0.11.0",
     "numpy>=1.23",
     "torch>=2.3.0",
@@ -17,6 +15,7 @@ dependencies = [
     "datasets>=4.5.0",
     "torchcodec>=0.10.0",
     "pathvalidate>=3.3.1",
+    "cachetools>=7.0.1",
 ]
 
 [dependency-groups]
@@ -33,6 +32,7 @@ test = [
 
 [tool.pytest.ini_options]
 env_files=[".env"]
+addopts = "--ignore=tests/unit/__dis__lagacy"
 
 [tool.setuptools.packages.find]
 where = ["."]

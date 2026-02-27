@@ -9,8 +9,6 @@ from dataset_loader.ksponspeech.constants import (
     DEFAULT_CONFIG_NAME,
     DEFAULT_REPO_ID,
     DEFAULT_SAMPLE_RATE,
-    DEFAULT_TASK,
-    KSPonSpeechTask,
 )
 
 
@@ -33,34 +31,31 @@ class KSPonSpeech(HuggingfaceLoader):
         self: KSPonSpeech,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[KSPonSpeechTask, ...] = DEFAULT_TASK,
+        use_cache: int = 0,
         **kwargs,
     ):
-        return KSPonSpeechDataset(
-            dataset=super().download(config_name, "train", **kwargs), sr=sr, task=task
-        )
+        dataset = self.load(config_name=config_name, split_name="train", **kwargs)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
 
     def valid(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[KSPonSpeechTask, ...] = DEFAULT_TASK,
+        use_cache: int = 0,
         **kwargs,
     ):
-        return KSPonSpeechDataset(
-            dataset=super().download(config_name, "valid", **kwargs), sr=sr, task=task
-        )
+        dataset = self.load(config_name=config_name, split_name="valid", **kwargs)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[KSPonSpeechTask, ...] = DEFAULT_TASK,
+        use_cache: int = 0,
         **kwargs,
     ):
-        return KSPonSpeechDataset(
-            dataset=super().download(config_name, "test", **kwargs), sr=sr, task=task
-        )
+        dataset = self.load(config_name=config_name, split_name="test", **kwargs)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
 
 
 __all__ = ["KSPonSpeech"]

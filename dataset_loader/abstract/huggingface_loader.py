@@ -14,8 +14,14 @@ from dataset_loader.interface import DatasetLoader
 
 
 class HuggingfaceLoader(DatasetLoader):
-    def __init__(self: HuggingfaceLoader, *, repo_id: str, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self: HuggingfaceLoader,
+        *,
+        repo_id: str,
+        dir_name: str | None = None,
+        path: str | None = None,
+    ):
+        super().__init__(dir_name=dir_name, path=path)
         self._repo_id: str = repo_id
 
     @property
@@ -37,24 +43,46 @@ class HuggingfaceLoader(DatasetLoader):
     @override
     def download(
         self: HuggingfaceLoader,
+        *,
         config_name: str,
-        split: str,
+        split_name: str,
         local_files_only: bool = False,
     ) -> Dataset:
         if config_name not in self.config_names:
             raise ValueError(
                 f"Config name '{config_name}' is not valid. Available configs: {self.config_names}"
             )
-        if split not in self.split_names(config_name):
+        if split_name not in self.split_names(config_name):
             raise ValueError(
-                f"Split '{split}' is not valid for config '{config_name}'. Available splits: {self.split_names(config_name)}"
+                f"Split '{split_name}' is not valid for config '{config_name}'. Available splits: {self.split_names(config_name)}"
             )
         return load_dataset(
             self.repo_id,
             name=config_name,
             cache_dir=self.path,
-            split=split,
+            split=split_name,
             download_config=DownloadConfig(local_files_only=local_files_only),
+        )
+
+    @override
+    def load(
+        self: HuggingfaceLoader,
+        *,
+        config_name: str,
+        split_name: str,
+        local_files_only: bool = False,
+    ) -> Dataset:
+        dir_name = self.repo_id.replace("/", "___")
+        path = self.path / dir_name
+        if not path.exists():
+            raise FileNotFoundError(
+                f"Dataset not found in cache. Please download it first using the 'download' method."
+            )
+
+        return self.download(
+            config_name=config_name,
+            split_name=split_name,
+            local_files_only=local_files_only,
         )
 
 

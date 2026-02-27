@@ -3,6 +3,7 @@ import numpy as np
 from typing import Any, Callable
 from typing_extensions import Self
 from dataclasses import dataclass, field
+from functools import cached_property
 
 from dataset_loader.interface.sample import Sample
 
@@ -15,7 +16,7 @@ class ASRSample:
     def id(self) -> str:
         return self.sample.id
 
-    @property
+    @cached_property
     def audio(self) -> np.ndarray | Callable[[], np.ndarray]:
         return self.sample.data["load_audio_func"]()
 

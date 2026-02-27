@@ -46,6 +46,7 @@ class HuggingfaceSnapshot(DatasetLoader):
 
         return snapshot_download(**snapshot_options)
 
+    @override
     def load(self: HuggingfaceSnapshot, name: str, load_options: dict | None = None):
         default_options = {
             "path": "parquet",

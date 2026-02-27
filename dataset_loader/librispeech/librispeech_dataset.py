@@ -2,151 +2,56 @@ from __future__ import annotations
 
 import librosa
 import numpy as np
+import pandas as pd
 
-from pathlib import Path
-from typing import Sequence, get_args
-from typing_extensions import override, Self
+from typing_extensions import override
 
-from dataset_loader.interface import Dataset, Sample
-from dataset_loader.librispeech.constants import LibriTask
+from dataset_loader.interface import Sample
+from dataset_loader.abstract import ParquetDataset
 
 
-class LibriSpeechDataset(Dataset):
+class LibriSpeechDataset(ParquetDataset):
     def __init__(
         self: LibriSpeechDataset,
-        ids: list[str],
-        audio_paths: list[Path],
-        references: list[str],
-        sample_rate: int,
-        task: tuple[LibriTask, ...],
+        *,
+        parquet: pd.DataFrame,
+        sr: int,
+        use_cache: int = 0,
     ):
-        if len(ids) != len(audio_paths) or len(ids) != len(references):
-            raise ValueError(
-                "ids, audio_paths, and references must have the same length"
-            )
-        for t in task:
-            if t not in get_args(LibriTask):
-                raise ValueError(f"Invalid task: {t}")
-        super().__init__(task=task)
+        super().__init__(parquet=parquet, use_cache=use_cache)
+        self._sr: int = sr
 
-        self._ids = ids
-        self._audio_paths = audio_paths
-        self._references = references
-        self._sr = sample_rate
-
-    @Dataset.args.getter
-    @override
+    @ParquetDataset.args.getter
     def args(self: LibriSpeechDataset) -> dict:
-        return {
-            **super().args,
-            "ids": self._ids,
-            "audio_paths": self._audio_paths,
-            "references": self._references,
-            "sample_rate": self._sr,
-        }
-
-    @Dataset.length.getter
-    @override
-    def length(self: LibriSpeechDataset) -> int:
-        return len(self._ids)
+        return {**super().args, "sr": self._sr}
 
     @property
     def sr(self: LibriSpeechDataset) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self: LibriSpeechDataset, value: int):
-        self._sr = value
+    def sr(self: LibriSpeechDataset, value: int) -> None:
+        if isinstance(value, int) and value > 0:
+            self._sr = value
+        else:
+            raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def to_dict(self: LibriSpeechDataset) -> dict:
-        return {
-            **super().to_dict(),
-            "ids": self._ids,
-            "audio_paths": [str(p) for p in self._audio_paths],
-            "references": self._references,
-            "sample_rate": self._sr,
+    def _get(self: LibriSpeechDataset, idx: int) -> Sample:
+        data = self._parquet.iloc[idx].to_dict()
+
+        def load_audio_func() -> np.ndarray:
+            audio_path = data["audio_path"]
+            wav, _ = librosa.load(audio_path, sr=self._sr)
+            return wav
+
+        _id = data.pop("id")
+        result = {
+            "load_audio_func": load_audio_func,
+            "ref": data["ref"],
         }
 
-    @override
-    def select(self: LibriSpeechDataset, indices: Sequence[int]) -> Self:
-        return LibriSpeechDataset(
-            [self._ids[i] for i in indices],
-            [self._audio_paths[i] for i in indices],
-            [self._references[i] for i in indices],
-            sample_rate=self._sr,
-            task=self.task,
-        )
-
-    @override
-    def slice(
-        self: LibriSpeechDataset,
-        start: int | None = None,
-        stop: int | None = None,
-        step: int | None = None,
-    ) -> Self:
-        return LibriSpeechDataset(
-            self._ids[start:stop:step],
-            self._audio_paths[start:stop:step],
-            self._references[start:stop:step],
-            sample_rate=self._sr,
-            task=self.task,
-        )
-
-    @override
-    def get(self: LibriSpeechDataset, idx: int) -> Sample:
-        _id = self._ids[idx]
-        audio_path = self._audio_paths[idx]
-        reference = self._references[idx]
-
-        def load_audio() -> np.ndarray:
-            return librosa.load(audio_path, sr=self._sr)[0]
-
-        return Sample(id=_id, data={"load_audio_func": load_audio, "ref": reference})
-
-    def save(self: LibriSpeechDataset, path: Path, description="LibriSpeechDataset"):
-        from sjpy.file.json import JsonSaver
-
-        JsonSaver(description).save(self.to_dict(), path)
-
-    @override
-    def _sample(
-        self: LibriSpeechDataset,
-        size: int,
-        start: int = 0,
-        rng: np.random.Generator | np.random.RandomState | None = None,
-    ) -> Self:
-        if rng is None or size == len(self._ids) - start:
-            return self.slice(start, start + size)
-        else:
-            data = list(
-                zip(
-                    self._ids[start:],
-                    self._audio_paths[start:],
-                    self._references[start:],
-                )
-            )
-            data = rng.choice(data, size=size, replace=False)
-            ids, audio_paths, references = zip(*data)
-            return LibriSpeechDataset(ids, audio_paths, references, self._sr, self.task)
-
-    @classmethod
-    @override
-    def from_dict(cls: type[LibriSpeechDataset], data: dict) -> Self:
-        return cls(
-            ids=data["ids"],
-            audio_paths=[Path(p) for p in data["audio_paths"]],
-            references=data["references"],
-            sample_rate=data["sample_rate"],
-            task=tuple(data.get("task", ())),
-        )
-
-    @staticmethod
-    def load(path: Path):
-        from sjpy.file.json import load_json
-
-        _, data = load_json(path)
-        return LibriSpeechDataset.from_dict(data)
+        return Sample(id=_id, data=result)
 
 
 __all__ = ["LibriSpeechDataset"]

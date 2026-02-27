@@ -1,42 +1,64 @@
 from __future__ import annotations
 
-from typing import get_args
+from typing import Sequence
 from typing_extensions import override
-from datasets import Dataset
+from datasets import Dataset, Audio
 
 from sjpy.string import remove_spaces_and_symbols
 
 from dataset_loader.abstract import HuggingfaceDataset
 from dataset_loader.interface import Sample
 
-from dataset_loader.tedlium.constants import TedliumTask
-
 
 class SegmentTedliumDataset(HuggingfaceDataset):
     def __init__(
-        self,
+        self: SegmentTedliumDataset,
+        *,
         dataset: Dataset,
         sr: int,
-        task: tuple[TedliumTask, ...],
-        ignore_set: set[str],
+        use_cache: int = 0,
+        ignore_set: Sequence[str],
     ):
-        for t in task:
-            if t not in get_args(TedliumTask):
-                raise ValueError(f"Invalid task: {t}")
+        super().__init__(dataset=dataset, use_cache=use_cache)
 
-        super().__init__(dataset=dataset, sr=sr, task=task)
-        self._ignore_set = ignore_set
+        self._ignore_set: set[str] = set(ignore_set)
+        self._sr = sr
+        self._cast_audio(sr)
 
     @HuggingfaceDataset.args.getter
     @override
-    def args(self):
+    def args(self: SegmentTedliumDataset) -> dict:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get args of a cleaned dataset")
         return {
             **super().args,
+            "sr": self._sr,
             "ignore_set": self._ignore_set,
         }
 
+    @property
+    def sr(self: SegmentTedliumDataset) -> int:
+        return self._sr
+
+    @sr.setter
+    def sr(self: SegmentTedliumDataset, value: int) -> None:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot change sample rate of a cleaned dataset")
+        elif value == self._sr:
+            return
+        elif not (isinstance(value, int) and value > 0):
+            raise ValueError("Sample rate must be a positive integer")
+        self._sr = value
+        self._cast_audio(value)
+
+    def _cast_audio(self: SegmentTedliumDataset, sr: int) -> None:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot change sample rate of a cleaned dataset")
+
+        self._dataset = self._dataset.cast_column("audio", Audio(sampling_rate=sr))
+
     @override
-    def get(self, idx: int) -> Sample:
+    def _get(self, idx: int) -> Sample:
         data = self._dataset[idx]
 
         def load_audio_func():
@@ -44,7 +66,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
             wav = samples.data.mean(dim=0).detach().cpu().numpy()
             return wav
 
-        text = data["text"]
+        text = data["text"].strip()
         if text in self._ignore_set:
             text = ""
 

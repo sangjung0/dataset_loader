@@ -2,6 +2,12 @@
 
 from dataset_loader.tedlium.segment_tedlium_dataset import SegmentTedliumDataset
 from dataset_loader.tedlium.tedlium_dataset import TedliumDataset
+from dataset_loader.tedlium.segment_tedlium import SegmentTedlium
 from dataset_loader.tedlium.tedlium import Tedlium
 
-__all__ = ["TedliumDataset", "Tedlium", "SegmentTedliumDataset"]
+__all__ = [
+    "TedliumDataset",
+    "SegmentTedlium",
+    "SegmentTedliumDataset",
+    "Tedlium",
+]

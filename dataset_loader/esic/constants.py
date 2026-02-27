@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from typing import Literal
 
 # Types
-ESICTask = Literal["asr"]
 ESICDataset = Literal["v1.1/dev", "v1.1/dev2", "v1.1/test"]
 
 # Defaults
@@ -10,7 +11,11 @@ DEFAULT_DEV2 = "v1.1/dev2"
 DEFAULT_TEST = "v1.1/test"
 DEFAULT_SAMPLE_RATE = 16_000
 DEFAULT_DOWNLOAD_URL = "https://lindat.mff.cuni.cz/repository/server/api/core/items/45b19770-d58e-45d9-aacd-d19875d1c987/allzip?handleId=11234/1-5415"
-DEFAULT_TASK = ("asr",)
+DATA_PARQUET = {
+    DEFAULT_DEV: DEFAULT_DEV + ".parquet",
+    DEFAULT_DEV2: DEFAULT_DEV2 + ".parquet",
+    DEFAULT_TEST: DEFAULT_TEST + ".parquet",
+}
 
 # Constants
 TXT = "txt"
@@ -45,6 +50,13 @@ FILE_TYPE = {
 
 
 __all__ = [
+    "ESICDataset",
+    "DEFAULT_DEV",
+    "DEFAULT_DEV2",
+    "DEFAULT_TEST",
+    "DEFAULT_SAMPLE_RATE",
+    "DEFAULT_DOWNLOAD_URL",
+    "DATA_PARQUET",
     "TXT",
     "VERT_TS",
     "ORTO",

@@ -177,3 +177,7 @@ cython_debug/
 .datasets
 .storage
 .shortcuts
+**__dis__**
+
+# agent
+.github/*.md

@@ -3,13 +3,14 @@ from __future__ import annotations
 from typing_extensions import override
 
 from dataset_loader.interface import ConcatDataset
+
+from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
 from dataset_loader.wrapper.asr.asr_dataset import ASRDataset, ASRDatasetPtc
 from dataset_loader.wrapper.asr.asr_sample import ASRSample
-from dataset_loader.wrapper.dataset_mixin import DatasetMixin
 
 
 class ASRConcatDataset(
-    ASRDataset, DatasetMixin[ASRSample, ConcatDataset[ASRDatasetPtc]]
+    ASRDataset, DatasetWrapper[ASRSample, ConcatDataset[ASRDatasetPtc]]
 ):
     def __init__(self, dataset: ConcatDataset[ASRDatasetPtc]):
         super().__init__(dataset=dataset)

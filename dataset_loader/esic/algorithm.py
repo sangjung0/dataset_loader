@@ -1,13 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 from pathlib import Path
 from collections.abc import Container
 
 from dataset_loader.esic.constants import FILE_TYPE
-
-if TYPE_CHECKING:
-    pass
 
 
 def select_file_from_dir(dir: Path, file_type: str) -> Path:

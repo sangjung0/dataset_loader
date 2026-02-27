@@ -9,8 +9,6 @@ from dataset_loader.zerothkorean.constants import (
     DEFAULT_CONFIG_NAME,
     DEFAULT_REPO_ID,
     DEFAULT_SAMPLE_RATE,
-    DEFAULT_TASK,
-    ZerothKoreanTask,
 )
 
 
@@ -31,23 +29,21 @@ class ZerothKorean(HuggingfaceLoader):
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[ZerothKoreanTask, ...] = DEFAULT_TASK,
+        use_cache: int = 0,
         **kwargs,
     ):
-        return ZerothKoreanDataset(
-            dataset=super().download(config_name, "train", **kwargs), sr=sr, task=task
-        )
+        dataset = self.load(config_name=config_name, split_name="train", **kwargs)
+        return ZerothKoreanDataset(dataset=dataset, sr=sr, use_cache=use_cache)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        task: tuple[ZerothKoreanTask, ...] = DEFAULT_TASK,
+        use_cache: int = 0,
         **kwargs,
     ):
-        return ZerothKoreanDataset(
-            dataset=super().download(config_name, "test", **kwargs), sr=sr, task=task
-        )
+        dataset = self.load(config_name=config_name, split_name="test", **kwargs)
+        return ZerothKoreanDataset(dataset=dataset, sr=sr, use_cache=use_cache)
 
 
 __all__ = ["ZerothKorean"]

@@ -1,7 +1,6 @@
 from typing import Literal
 
 # Types
-LibriTask = Literal["asr"]
 LibriSpeechSet = Literal[
     "dev-clean",
     "dev-other",
@@ -14,7 +13,6 @@ LibriSpeechSet = Literal[
 
 # Defaults
 DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_TASK = ("asr",)
 DEFAULT_DOWNLOAD_URLS = {
     "dev-clean": "https://openslr.trmal.net/resources/12/dev-clean.tar.gz",
     "dev-other": "https://openslr.trmal.net/resources/12/dev-other.tar.gz",
@@ -24,12 +22,20 @@ DEFAULT_DOWNLOAD_URLS = {
     "train-clean-360": "https://openslr.trmal.net/resources/12/train-clean-360.tar.gz",
     "train-other-500": "https://openslr.trmal.net/resources/12/train-other-500.tar.gz",
 }
+DATA_PARQUET = {
+    "train-clean-100": "train-clean-100.parquet",
+    "train-clean-360": "train-clean-360.parquet",
+    "train-other-500": "train-other-500.parquet",
+    "dev-clean": "dev-clean.parquet",
+    "dev-other": "dev-other.parquet",
+    "test-clean": "test-clean.parquet",
+    "test-other": "test-other.parquet",
+}
 
 
 __all__ = [
-    "LibriTask",
     "LibriSpeechSet",
     "DEFAULT_SAMPLE_RATE",
-    "DEFAULT_TASK",
     "DEFAULT_DOWNLOAD_URLS",
+    "DATA_PARQUET",
 ]
