@@ -3,34 +3,31 @@ from __future__ import annotations
 import pytest
 import numpy as np
 
-from dataset_loader.interface import Dataset, Sample
+from collections.abc import Sequence
+
+from dataset_loader.protocol import (
+    DatasetProtocol,
+    ConcatDatasetProtocol,
+    SampleProtocol,
+)
 
 
-class MixinDatasetTest:
+class MixinDatasetProtocolTest:
     """
     Need: dataset, samples
     """
 
-    @pytest.fixture
-    def ConcatDataset(self):
-        from dataset_loader.interface import ConcatDataset
-
-        return ConcatDataset
-
-    @pytest.fixture
-    def Dataset(self):
-        from dataset_loader.interface import Dataset
-
-        return Dataset
-
-    def test__len__(self, dataset: Dataset, samples: list[Sample]):
+    @staticmethod
+    def assert__len__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
         assert len(dataset) == len(samples)
 
-    def test__iter__(self, dataset: Dataset, samples: list[Sample]):
+    @staticmethod
+    def assert__iter__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
         for i, sample in enumerate(dataset):
             assert sample == samples[i]
 
-    def test__getitem__(self, dataset: Dataset, samples: list[Sample]):
+    @staticmethod
+    def assert__getitem__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
         # int
         for i in range(len(samples)):
             assert dataset[i] == samples[i]
@@ -49,7 +46,8 @@ class MixinDatasetTest:
         assert isinstance(indexed_dataset, dataset.__class__)
         assert indexed_dataset_list == [samples[i] for i in indices]
 
-    def test_select(self, dataset: Dataset):
+    @staticmethod
+    def assert_select(dataset: DatasetProtocol):
         indices = [i for i in range(0, len(dataset), 5)]
         selected_dataset = dataset.select(indices)
         validate_dataset = dataset[indices]
@@ -58,7 +56,8 @@ class MixinDatasetTest:
             sample for sample in validate_dataset
         ]
 
-    def test_slice(self, dataset: Dataset):
+    @staticmethod
+    def assert_slice(dataset: DatasetProtocol):
         sl = slice(len(dataset) // 3, len(dataset) // 2, 2)
         sliced_dataset = dataset.slice(sl.start, sl.stop, sl.step)
         validate_dataset = dataset[sl]
@@ -67,7 +66,8 @@ class MixinDatasetTest:
             sample for sample in validate_dataset
         ]
 
-    def test_sample(self, dataset: Dataset, samples: list[Sample]):
+    @staticmethod
+    def assert_sample(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
         # without rng
         size = len(dataset) // 5
         start = np.random.randint(0, len(dataset) - size)
@@ -88,55 +88,66 @@ class MixinDatasetTest:
         assert isinstance(sampled_dataset, dataset.__class__)
         assert len(sampled_dataset) == size
 
-    def test_get(self, dataset: Dataset):
+    @staticmethod
+    def assert_get(dataset: DatasetProtocol):
         for i in range(len(dataset)):
             assert dataset.get(i) == dataset[i]
         with pytest.raises(IndexError):
             dataset.get(len(dataset))
         assert dataset.get(-1) == dataset[-1]
 
-    def test__add__(self, dataset: Dataset, ConcatDataset: type):
+    @staticmethod
+    def assert__add__(
+        dataset: DatasetProtocol, ConcatDatasetType: type[ConcatDatasetProtocol]
+    ):
         l = len(dataset) // 3
         data_1 = dataset[:l]
         data_2 = dataset[l : 2 * l]
         data_3 = dataset[2 * l :]
 
-        # other: Dataset
+        # other: DatasetProtocol
         concat_dataset = data_1 + data_2
-        assert isinstance(concat_dataset, ConcatDataset)
+        assert isinstance(concat_dataset, ConcatDatasetType)
         assert len(concat_dataset) == len(data_1) + len(data_2)
         assert [sample for sample in concat_dataset] == [
             sample for sample in data_1
         ] + [sample for sample in data_2]
 
-        # other: ConcatDataset
+        # other: ConcatDatasetType
         concat_other = concat_dataset
         concat_dataset = concat_other + data_3
-        assert isinstance(concat_dataset, ConcatDataset)
+        assert isinstance(concat_dataset, ConcatDatasetType)
         assert len(concat_dataset) == len(concat_other) + len(data_3)
         assert [sample for sample in concat_dataset] == (
             [sample for sample in concat_other] + [sample for sample in data_3]
         )
 
-    def test_to_dict_and_from_dict(self, dataset: Dataset, samples: list[Sample]):
+    @staticmethod
+    def assert_to_dict_and_from_dict(
+        dataset: DatasetProtocol, samples: Sequence[SampleProtocol]
+    ):
         d = dataset.to_dict()
         restored = type(dataset).from_dict(d)
         assert isinstance(restored, type(dataset))
         assert [sample for sample in restored] == samples
 
-    def test_to_pointer_and_from_pointer(
-        self, dataset: Dataset, samples: list[Sample], Dataset: type
+    @staticmethod
+    def assert_to_config_and_from_config(
+        dataset: DatasetProtocol,
+        samples: Sequence[SampleProtocol],
+        DatasetProtocolType: type[DatasetProtocol],
     ):
-        pointer = dataset.to_pointer()
-        restored = type(dataset).from_pointer(pointer)
-        restored_2 = Dataset.from_pointer(pointer)
+        pointer = dataset.to_config()
+        restored = type(dataset).from_config(pointer)
+        restored_2 = DatasetProtocolType.from_config(pointer)
         assert isinstance(restored, type(dataset))
         assert [sample for sample in restored] == samples
         assert isinstance(restored_2, type(dataset))
         assert [sample for sample in restored_2] == samples
 
-    def test_sample_identity(self, dataset: Dataset):
+    @staticmethod
+    def assert_sample_identity(dataset: DatasetProtocol):
         assert len(dataset) == len(set(sample.id for sample in dataset))
 
 
-__all__ = ["MixinDatasetTest"]
+__all__ = ["MixinDatasetProtocolTest"]

@@ -5,16 +5,18 @@ import librosa
 
 from pathlib import Path
 from tqdm import tqdm
+from typing import Any
+from collections.abc import Mapping
 
 
-def get_file_hash(file: Path):
+def get_file_hash(file: Path) -> str:
     hash_md5 = hashlib.md5()
     readlines = file.read_bytes()
     hash_md5.update(readlines)
     return hash_md5.hexdigest()
 
 
-def parse_ctl_hashes(ctl_file: Path):
+def parse_ctl_hashes(ctl_file: Path) -> dict[str, str]:
     readlines = ctl_file.read_text().splitlines()
     hashes = {}
     for line in readlines:
@@ -28,11 +30,11 @@ def parse_files(
     sph_dir: Path,
     stm_dir: Path,
     *,
-    sph_hash: dict[str, str] | None = None,
-    stm_hash: dict[str, str] | None = None,
+    sph_hash: Mapping[str, str] | None = None,
+    stm_hash: Mapping[str, str] | None = None,
     verbose: bool = False,
     dataset_path: Path | str = "/",
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     sph_files = list(sph_dir.glob("*.sph"))
     stm_files = list(stm_dir.glob("*.stm"))
     if len(sph_files) != len(stm_files):

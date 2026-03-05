@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from functools import lru_cache, cached_property
+from pathlib import Path
+from functools import cached_property, lru_cache
 from typing_extensions import override
 from datasets import (
     load_dataset,
@@ -10,39 +11,42 @@ from datasets import (
     DownloadConfig,
 )
 
-from dataset_loader.interface import DatasetLoader
+from dataset_loader.base import DatasetLoader
 
 
 class HuggingfaceLoader(DatasetLoader):
     def __init__(
-        self: HuggingfaceLoader,
+        self,
         *,
         repo_id: str,
         dir_name: str | None = None,
-        path: str | None = None,
+        path: str | Path | None = None,
     ):
         super().__init__(dir_name=dir_name, path=path)
         self._repo_id: str = repo_id
 
     @property
-    def repo_id(self: HuggingfaceLoader) -> str:
+    def repo_id(self) -> str:
         return self._repo_id
 
     @cached_property
-    def config_names(self: HuggingfaceLoader) -> list[str]:
+    def config_names(self) -> list[str]:
         return get_dataset_config_names(self.repo_id)
 
     @lru_cache(maxsize=32)
-    def split_names(self: HuggingfaceLoader, config_name: str) -> list[str]:
+    def _split_names(self, config_name: str) -> list[str]:
         if config_name not in self.config_names:
             raise ValueError(
                 f"Config name '{config_name}' is not valid. Available configs: {self.config_names}"
             )
         return get_dataset_split_names(self.repo_id, config_name)
 
+    def split_names(self, config_name: str) -> list[str]:
+        return self._split_names(config_name)
+
     @override
     def download(
-        self: HuggingfaceLoader,
+        self,
         *,
         config_name: str,
         split_name: str,
@@ -59,14 +63,14 @@ class HuggingfaceLoader(DatasetLoader):
         return load_dataset(
             self.repo_id,
             name=config_name,
-            cache_dir=self.path,
+            cache_dir=str(self.path),
             split=split_name,
             download_config=DownloadConfig(local_files_only=local_files_only),
         )
 
     @override
     def load(
-        self: HuggingfaceLoader,
+        self,
         *,
         config_name: str,
         split_name: str,

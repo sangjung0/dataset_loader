@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from typing import Any
 from typing_extensions import override
 from huggingface_hub import snapshot_download
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, Dataset
+from collections.abc import Mapping
 
-from dataset_loader.interface import DatasetLoader
+from dataset_loader.base import DatasetLoader
 
 
 class HuggingfaceSnapshot(DatasetLoader):
     def __init__(
-        self: HuggingfaceSnapshot,
+        self,
         *,
         repo_id: str,
         dir_name: str | None = None,
@@ -19,14 +21,11 @@ class HuggingfaceSnapshot(DatasetLoader):
         self._repo_id: str = repo_id
 
     @property
-    def repo_id(self: HuggingfaceSnapshot) -> str:
+    def repo_id(self) -> str:
         return self._repo_id
 
     @override
-    def download(
-        self: HuggingfaceSnapshot,
-        snapshot_options: dict | None = None,
-    ) -> str:
+    def download(self, snapshot_options: Mapping[str, Any] | None = None) -> str:
         default_snapshot_options = {
             "repo_id": self.repo_id,
             "repo_type": "dataset",
@@ -47,9 +46,7 @@ class HuggingfaceSnapshot(DatasetLoader):
         return snapshot_download(**snapshot_options)
 
     @override
-    def load(
-        self: HuggingfaceSnapshot, name: str, load_options: dict | None = None
-    ) -> DatasetDict:
+    def load(self, name: str, load_options: Mapping[str, Any] | None = None) -> Dataset:
         default_options = {
             "path": "parquet",
             "data_files": {name: f"{self.path}/*.parquet"},
@@ -63,7 +60,7 @@ class HuggingfaceSnapshot(DatasetLoader):
                 **load_options,
             }
 
-        return load_dataset(**load_options)
+        return load_dataset(**load_options)[name]
 
 
 __all__ = ["HuggingfaceSnapshot"]

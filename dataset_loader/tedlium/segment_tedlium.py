@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing_extensions import override
-from datasets import Audio
+from collections.abc import Sequence
 
 from dataset_loader.abstract import HuggingfaceSnapshot
 
@@ -15,7 +14,7 @@ from dataset_loader.tedlium.constants import (
 
 class SegmentTedlium(HuggingfaceSnapshot):
     def __init__(
-        self: SegmentTedlium,
+        self,
         *,
         repo_id: str = DEFAULT_SEGMENT_REPO_ID,
         dir_name: str | None = None,
@@ -23,23 +22,12 @@ class SegmentTedlium(HuggingfaceSnapshot):
     ):
         super().__init__(repo_id=repo_id, dir_name=dir_name, path=path)
 
-    @override
-    def load(
-        self: SegmentTedlium,
-        name: str,
-        load_options: dict | None = None,
-    ):
-        dataset_dict = super().load(name, load_options=load_options)
-        dataset = dataset_dict[name]
-        return dataset
-
     def train(
-        self: SegmentTedlium,
+        self,
         *,
         sr: int = DEFAULT_SEGMENT_SAMPLE_RATE,
-        use_cache: int = 0,
-        ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
-    ):
+        ignore_set: Sequence[str] = DEFAULT_SEGMENT_IGNORE_SET,
+    ) -> SegmentTedliumDataset:
         dataset = self.load(
             "train",
             load_options={
@@ -49,17 +37,14 @@ class SegmentTedlium(HuggingfaceSnapshot):
             },
         )
 
-        return SegmentTedliumDataset(
-            dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return SegmentTedliumDataset(dataset=dataset, sr=sr, ignore_set=ignore_set)
 
     def validation(
         self,
         *,
         sr: int = DEFAULT_SEGMENT_SAMPLE_RATE,
-        use_cache: int = 0,
-        ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
-    ):
+        ignore_set: Sequence[str] = DEFAULT_SEGMENT_IGNORE_SET,
+    ) -> SegmentTedliumDataset:
         dataset = self.load(
             "validation",
             load_options={
@@ -69,17 +54,14 @@ class SegmentTedlium(HuggingfaceSnapshot):
             },
         )
 
-        return SegmentTedliumDataset(
-            dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return SegmentTedliumDataset(dataset=dataset, sr=sr, ignore_set=ignore_set)
 
     def test(
         self,
         *,
         sr: int = DEFAULT_SEGMENT_SAMPLE_RATE,
-        use_cache: int = 0,
-        ignore_set: set[str] = DEFAULT_SEGMENT_IGNORE_SET,
-    ):
+        ignore_set: Sequence[str] = DEFAULT_SEGMENT_IGNORE_SET,
+    ) -> SegmentTedliumDataset:
         dataset = self.load(
             "test",
             load_options={
@@ -88,9 +70,18 @@ class SegmentTedlium(HuggingfaceSnapshot):
                 },
             },
         )
-        return SegmentTedliumDataset(
-            dataset=dataset, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return SegmentTedliumDataset(dataset=dataset, sr=sr, ignore_set=ignore_set)
 
 
 __all__ = ["SegmentTedlium"]
+
+
+if __name__ == "__main__":
+    tedlium = SegmentTedlium()
+    train_ds = tedlium.train()
+    val_ds = tedlium.validation()
+    test_ds = tedlium.test()
+
+    print(train_ds[0])
+    print(val_ds[0])
+    print(test_ds[0])

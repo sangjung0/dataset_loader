@@ -3,10 +3,10 @@ from __future__ import annotations
 import pytest
 import numpy as np
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 
-from tests.unit.interface.dummy_dataset import DummyDataset
-from tests.unit.interface.mixin_dataset_test import MixinDatasetTest
+from tests.unit.base.dummy_dataset import DummyDataset
+from tests.unit.base.mixin_dataset_test import MixinDatasetTest
 
 
 class TestDataset(MixinDatasetTest):
@@ -26,11 +26,9 @@ class TestDataset(MixinDatasetTest):
     def samples(self, data: list[dict]) -> list[Sample]:
         return [Sample(id=d["id"], data=d) for d in data]
 
-    @pytest.fixture(params=tuple({"use_cache": i} for i in range(0, 101, 50)))
-    def dataset(
-        self, samples: list[Sample], request: pytest.FixtureRequest
-    ) -> DummyDataset:
-        return DummyDataset(samples=samples, **request.param)
+    @pytest.fixture
+    def dataset(self, samples: list[Sample]) -> DummyDataset:
+        return DummyDataset(samples=samples)
 
 
 __all__ = ["TestDataset"]

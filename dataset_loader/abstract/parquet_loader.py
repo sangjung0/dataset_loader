@@ -4,40 +4,37 @@ import pandas as pd
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Any
 from typing_extensions import override
 from functools import cached_property
+from collections.abc import Mapping
 
-from dataset_loader.interface import DatasetLoader
+from dataset_loader.base import DatasetLoader
 
 
 class ParquetLoader(DatasetLoader, ABC):
     def __init__(
-        self: ParquetLoader,
+        self,
         *,
         dir_name: str | None = None,
         path: str | Path | None = None,
-        parquet_name_and_path: dict[str, str] | None = None,
+        parquet_name_and_path: Mapping[str, str] | None = None,
     ):
         super().__init__(dir_name=dir_name, path=path)
         if parquet_name_and_path is None:
             parquet_name_and_path = {}
-        self._parquet_name_and_path = parquet_name_and_path
+        self._parquet_name_and_path = {**parquet_name_and_path}
 
     @cached_property
-    def names(self: ParquetLoader) -> tuple[str, ...]:
+    def names(self) -> tuple[str, ...]:
         return tuple(self._parquet_name_and_path.keys())
 
     @property
-    def parquet_name_and_path(self: ParquetLoader) -> dict[str, str]:
+    def parquet_name_and_path(self) -> dict[str, str]:
         return self._parquet_name_and_path.copy()
 
     @override
-    def load(
-        self: ParquetLoader,
-        *,
-        name: str,
-        prepare_dir: str = ".prepare",
-    ) -> pd.DataFrame:
+    def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame:
         if name not in self.names:
             raise ValueError(f"Invalid config: {name}, expected one of {self.names}")
 
@@ -48,13 +45,13 @@ class ParquetLoader(DatasetLoader, ABC):
         return pd.read_parquet(parquet_path)
 
     def prepare(
-        self: ParquetLoader,
+        self,
         *,
         name: str = "all",
         verbose: bool = True,
         prepare_dir: str = ".prepare",
-        parse_options: dict | None = None,
-    ):
+        parse_options: Mapping[str, Any] | None = None,
+    ) -> None:
         if name == "all":
             for name in self.names:
                 self.prepare(
@@ -83,12 +80,7 @@ class ParquetLoader(DatasetLoader, ABC):
             pd.DataFrame(data).to_parquet(parquet_path)
 
     @abstractmethod
-    def _parse_files(
-        self: ParquetLoader,
-        *,
-        name: str,
-        verbose: bool = True,
-    ) -> list[dict]:
+    def _parse_files(self, *, name: str, verbose: bool = True) -> list[dict[str, Any]]:
         raise NotImplementedError("Subclasses must implement _parse_files method")
 
 

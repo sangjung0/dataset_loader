@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from typing import Any
 from pathlib import Path
+from abc import ABC, abstractmethod
 
-from dataset_loader.interface.constants import DEFAULT_PATH
+from dataset_loader.base.constants import DEFAULT_PATH
 
 
 class DatasetLoader(ABC):
@@ -17,7 +18,7 @@ class DatasetLoader(ABC):
     """
 
     def __init__(
-        self: DatasetLoader,
+        self,
         *,
         dir_name: str | None = None,
         path: str | Path | None = None,
@@ -35,15 +36,15 @@ class DatasetLoader(ABC):
         self._path.mkdir(parents=True, exist_ok=True)
 
     @property
-    def path(self: DatasetLoader) -> Path:
+    def path(self) -> Path:
         return self._path
 
     @abstractmethod
-    def download(self: DatasetLoader, *args, **kwargs):
+    def download(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
     @abstractmethod
-    def load(self: DatasetLoader, *args, **kwargs):
+    def load(self, *args, **kwargs) -> Any:
         raise NotImplementedError
 
 

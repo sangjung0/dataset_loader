@@ -2,20 +2,16 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Sequence
+from typing import Any
 from typing_extensions import override
+from collections.abc import Mapping, Sequence
 
-from dataset_loader.interface import Dataset, Sample
+from dataset_loader.base import Dataset, Sample
 
 
 class DummyDataset(Dataset):
-    def __init__(
-        self: DummyDataset,
-        *,
-        samples: list[Sample],
-        use_cache: int = 0,
-    ):
-        super().__init__(use_cache=use_cache)
+    def __init__(self: DummyDataset, *, samples: list[Sample]):
+        super().__init__()
         self._samples = list(samples)
 
     @Dataset.args.getter
@@ -32,14 +28,10 @@ class DummyDataset(Dataset):
         return len(self._samples)
 
     @override
-    def select(
-        self: DummyDataset, indices: Sequence[int], *, use_cache: int = 0
-    ) -> DummyDataset:
+    def select(self: DummyDataset, indices: Sequence[int]) -> DummyDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot select from a cleaned dataset")
-        return DummyDataset(
-            samples=[self._samples[i] for i in indices], use_cache=use_cache
-        )
+        return DummyDataset(samples=[self._samples[i] for i in indices])
 
     @override
     def slice(
@@ -47,12 +39,10 @@ class DummyDataset(Dataset):
         start: int | None = None,
         stop: int | None = None,
         step: int | None = None,
-        *,
-        use_cache: int = 0,
     ) -> DummyDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot slice a cleaned dataset")
-        return DummyDataset(samples=self._samples[start:stop:step], use_cache=use_cache)
+        return DummyDataset(samples=self._samples[start:stop:step])
 
     @override
     def _sample(
@@ -61,19 +51,18 @@ class DummyDataset(Dataset):
         start: int = 0,
         *,
         rng: np.random.Generator | np.random.RandomState | None = None,
-        use_cache: int = 0,
     ) -> DummyDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot sample from a cleaned dataset")
         elif rng is None or size == len(self) - start:
-            return self.slice(start, start + size, use_cache=use_cache)
+            return self.slice(start, start + size)
         else:
             indices = range(len(self))[start:]
             indices = rng.choice(indices, size=size, replace=False)
-            return self.select(indices, use_cache=use_cache)
+            return self.select(list(indices))
 
     @override
-    def _get(self: DummyDataset, idx: int) -> Sample:
+    def get(self: DummyDataset, idx: int) -> Sample:
         try:
             return self._samples[idx]
         except IndexError as e:
@@ -86,7 +75,8 @@ class DummyDataset(Dataset):
 
     @classmethod
     @override
-    def from_dict(cls, data: dict) -> DummyDataset:
+    def from_dict(cls, data: Mapping[str, Any]) -> DummyDataset:
+        data = {**data}
         data["samples"] = [Sample.from_dict(s) for s in data["samples"]]
         return cls(**data)
 

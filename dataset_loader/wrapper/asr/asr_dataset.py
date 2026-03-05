@@ -1,31 +1,28 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from typing import Sequence
+from typing import Sequence, overload, Any, cast
 from typing_extensions import Self, override
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import ConcatDataset, Dataset, Sample
+from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
 
 from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
 from dataset_loader.wrapper.thread_loader_mixin import ThreadLoaderMixin
+
 from dataset_loader.wrapper.asr.asr_sample import ASRSample
-from dataset_loader.wrapper.asr.asr_dataset_ptc import ASRDatasetPtc
+from dataset_loader.wrapper.asr.protocol import (
+    ASRConcatDatasetProtocol,
+    ASRDatasetProtocol,
+)
 
 if TYPE_CHECKING:
     from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
 
 
 class ASRDataset(
-    DatasetWrapper[ASRSample, "ASRConcatDataset"], ThreadLoaderMixin[ASRSample]
+    DatasetWrapper[ASRDatasetProtocol, ASRSample], ThreadLoaderMixin[ASRSample]
 ):
-    def __init__(self, dataset: ASRDatasetPtc):
-        self._dataset = dataset
-
-    @property
-    @override
-    def dataset(self) -> ASRDatasetPtc:
-        return self._dataset
-
     @property
     def sr(self) -> int:
         return self.dataset.sr
@@ -34,13 +31,22 @@ class ASRDataset(
     def sr(self, value: int):
         self.dataset.sr = value
 
+    @overload
+    def getitem(self, key: int) -> ASRSample: ...
+    @overload
+    def getitem(self, key: slice | Sequence[int]) -> Self: ...
+    @override
     def getitem(self, key: int | slice | Sequence[int]) -> ASRSample | Self:
-        result = self.dataset.getitem(key)
+        result = self.dataset[key]
         if isinstance(result, Sample):
             return ASRSample(sample=result)
+        assert isinstance(result, ASRDatasetProtocol)
         return self.__class__(dataset=result)
 
-    def concat(self, other: Self | "ASRConcatDataset") -> "ASRConcatDataset":
+    @override
+    def concat(
+        self, other: DatasetProtocol | ConcatDatasetProtocol
+    ) -> "ASRConcatDataset":
         from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
 
         if isinstance(other, ASRConcatDataset) or isinstance(other, ASRDataset):
@@ -48,13 +54,14 @@ class ASRDataset(
         else:
             raise TypeError("Invalid type for concatenation")
 
+    @override
     def get(self, idx: int) -> ASRSample:
         sample = self.dataset.get(idx)
         return ASRSample(sample=sample)
 
     def _loader(self, sample: ASRSample) -> ASRSample:
-        sample.audio
+        _ = sample.audio  # Force loading audio
         return sample
 
 
-__all__ = ["ASRDataset", "ASRDatasetPtc"]
+__all__ = ["ASRDataset"]

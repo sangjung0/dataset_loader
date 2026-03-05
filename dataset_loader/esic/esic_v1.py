@@ -5,6 +5,7 @@ import pandas as pd
 
 from pathlib import Path
 from tqdm import tqdm
+from typing import overload, Any
 from typing_extensions import override
 
 from sjpy.string import normalize_text_only_en
@@ -38,7 +39,7 @@ class ESICv1(ParquetLoader):
     """
 
     def __init__(
-        self: ESICv1,
+        self,
         *,
         dir_name: str | None = None,
         path: str | Path | None = None,
@@ -53,16 +54,11 @@ class ESICv1(ParquetLoader):
         self._download_url = download_url
 
     @property
-    def download_url(self: ESICv1) -> str:
+    def download_url(self) -> str:
         return self._download_url
 
     @override
-    def download(
-        self: ESICv1,
-        *,
-        url: str | None = None,
-        verbose: bool = True,
-    ) -> Path:
+    def download(self, *, url: str | None = None, verbose: bool = True) -> Path:
         import shutil
 
         from sjpy.download import download
@@ -84,22 +80,26 @@ class ESICv1(ParquetLoader):
         target.unlink()
         return extracted
 
-    @override
+    @overload
     def load(
-        self: ESICv1, *, name: ESICDataset, prepare_dir: str = ".prepare"
-    ) -> pd.DataFrame:
+        self, *, name: ESICDataset, prepare_dir: str = ".prepare"
+    ) -> pd.DataFrame: ...
+    @overload
+    def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame: ...
+    @override
+    def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
         data["mp4_path"] = data["mp4_path"].apply(lambda x: self.path / x)
         return data
 
     @override
     def _parse_files(
-        self: ESICv1,
+        self,
         *,
         name: str,
         verbose: bool = False,
-        excludes: tuple[str] = (),
-    ) -> list[dict]:
+        excludes: tuple[str, ...] = (),
+    ) -> list[dict[str, Any]]:
         data = []
         for d in tqdm(
             search_dirs(self.path / name, excludes=excludes),
@@ -129,34 +129,31 @@ class ESICv1(ParquetLoader):
         return data
 
     def dev(
-        self: ESICv1,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
     ) -> ESICv1Dataset:
         data = self.load(name=DEFAULT_DEV, prepare_dir=prepare_dir)
-        return ESICv1Dataset(parquet=data, sr=sr, use_cache=use_cache)
+        return ESICv1Dataset(parquet=data, sr=sr)
 
     def dev2(
-        self: ESICv1,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
     ) -> ESICv1Dataset:
         data = self.load(name=DEFAULT_DEV2, prepare_dir=prepare_dir)
-        return ESICv1Dataset(parquet=data, sr=sr, use_cache=use_cache)
+        return ESICv1Dataset(parquet=data, sr=sr)
 
     def test(
-        self: ESICv1,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
     ) -> ESICv1Dataset:
         data = self.load(name=DEFAULT_TEST, prepare_dir=prepare_dir)
-        return ESICv1Dataset(parquet=data, sr=sr, use_cache=use_cache)
+        return ESICv1Dataset(parquet=data, sr=sr)
 
 
 __all__ = ["ESICv1"]

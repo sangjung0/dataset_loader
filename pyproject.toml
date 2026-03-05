@@ -32,7 +32,7 @@ test = [
 
 [tool.pytest.ini_options]
 env_files=[".env"]
-addopts = "--ignore=tests/unit/__dis__lagacy"
+addopts = "--ignore=tests/unit/__dis__lagacy --ignore=tests/scripts"
 
 [tool.setuptools.packages.find]
 where = ["."]

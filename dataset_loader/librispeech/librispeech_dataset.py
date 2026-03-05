@@ -4,9 +4,10 @@ import librosa
 import numpy as np
 import pandas as pd
 
+from typing import Any
 from typing_extensions import override
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
 
@@ -16,13 +17,12 @@ class LibriSpeechDataset(ParquetDataset):
         *,
         parquet: pd.DataFrame,
         sr: int,
-        use_cache: int = 0,
     ):
-        super().__init__(parquet=parquet, use_cache=use_cache)
+        super().__init__(parquet=parquet)
         self._sr: int = sr
 
     @ParquetDataset.args.getter
-    def args(self: LibriSpeechDataset) -> dict:
+    def args(self: LibriSpeechDataset) -> dict[str, Any]:
         return {**super().args, "sr": self._sr}
 
     @property
@@ -37,7 +37,9 @@ class LibriSpeechDataset(ParquetDataset):
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def _get(self: LibriSpeechDataset, idx: int) -> Sample:
+    def get(self: LibriSpeechDataset, idx: int) -> Sample:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get sample from a cleaned dataset.")
         data = self._parquet.iloc[idx].to_dict()
 
         def load_audio_func() -> np.ndarray:

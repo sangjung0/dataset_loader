@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import pandas as pd
 
-from pathlib import Path
-from typing import Literal, Sequence, Mapping
-from typing_extensions import override
 from tqdm import tqdm
+from pathlib import Path
+from typing import Literal, overload
+from typing_extensions import override
+from collections.abc import Sequence, Mapping
 
 from dataset_loader.abstract import ParquetLoader
 
@@ -29,7 +30,7 @@ class LibriSpeech(ParquetLoader):
         *,
         dir_name: str | None = None,
         path: str | Path | None = None,
-        parquet_name_and_path: dict[str, Path] | None = None,
+        parquet_name_and_path: dict[str, str] | None = None,
         download_urls: dict[str, str] = DEFAULT_DOWNLOAD_URLS,
     ):
         if parquet_name_and_path is None:
@@ -43,15 +44,33 @@ class LibriSpeech(ParquetLoader):
     def download_urls(self: LibriSpeech) -> dict[str, str]:
         return self._download_urls.copy()
 
+    @overload
+    def download(
+        self: LibriSpeech,
+        *,
+        name: str | LibriSpeechSet,
+        url: Mapping[str, str] | str | None = None,
+        verbose: bool = True,
+    ) -> Path: ...
+    @overload
+    def download(
+        self: LibriSpeech,
+        *,
+        name: list[str | LibriSpeechSet] | Literal["all"],
+        url: Mapping[str, str] | None = None,
+        verbose: bool = True,
+    ) -> list[Path]: ...
     @override
     def download(
         self: LibriSpeech,
         *,
-        name: Sequence[str | LibriSpeechSet] | str | Literal["all"] = "all",
-        url: Mapping[str, str | Path] | str | Path | None = None,
+        name: list[str | LibriSpeechSet] | str | Literal["all"] = "all",
+        url: Mapping[str, str] | str | None = None,
         verbose: bool = True,
     ) -> Path | list[Path]:
         if name == "all":
+            if not (isinstance(url, Mapping) and url is None):
+                raise ValueError("URL must be a mapping or None when name is 'all'.")
             return self.download(
                 name=list(self._download_urls.keys()), url=url, verbose=verbose
             )
@@ -138,67 +157,46 @@ class LibriSpeech(ParquetLoader):
         return data
 
     def train_clean_100(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-clean-100", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def train_clean_360(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-clean-360", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def train_other_500(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-other-500", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def dev_clean(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="dev-clean", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def dev_other(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="dev-other", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def test_clean(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="test-clean", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
     def test_other(
-        self: LibriSpeech,
-        sr: int = DEFAULT_SAMPLE_RATE,
-        prepare_dir: str = ".prepare",
-        use_cache: int = 0,
+        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="test-other", prepare_dir=prepare_dir)
-        return LibriSpeechDataset(parquet=data, sr=sr, use_cache=use_cache)
+        return LibriSpeechDataset(parquet=data, sr=sr)
 
 
 __all__ = ["LibriSpeech"]

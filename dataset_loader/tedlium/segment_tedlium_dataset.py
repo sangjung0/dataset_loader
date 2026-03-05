@@ -1,25 +1,21 @@
 from __future__ import annotations
 
-from typing import Sequence
+import numpy as np
+
+from typing import Any
 from typing_extensions import override
+from collections.abc import Sequence
 from datasets import Dataset, Audio
 
 from sjpy.string import remove_spaces_and_symbols
 
 from dataset_loader.abstract import HuggingfaceDataset
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 
 
 class SegmentTedliumDataset(HuggingfaceDataset):
-    def __init__(
-        self: SegmentTedliumDataset,
-        *,
-        dataset: Dataset,
-        sr: int,
-        use_cache: int = 0,
-        ignore_set: Sequence[str],
-    ):
-        super().__init__(dataset=dataset, use_cache=use_cache)
+    def __init__(self, *, dataset: Dataset, sr: int, ignore_set: Sequence[str]):
+        super().__init__(dataset=dataset)
 
         self._ignore_set: set[str] = set(ignore_set)
         self._sr = sr
@@ -27,7 +23,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
 
     @HuggingfaceDataset.args.getter
     @override
-    def args(self: SegmentTedliumDataset) -> dict:
+    def args(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot get args of a cleaned dataset")
         return {
@@ -37,11 +33,11 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         }
 
     @property
-    def sr(self: SegmentTedliumDataset) -> int:
+    def sr(self) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self: SegmentTedliumDataset, value: int) -> None:
+    def sr(self, value: int) -> None:
         if self.is_cleaned:
             raise RuntimeError("Cannot change sample rate of a cleaned dataset")
         elif value == self._sr:
@@ -51,17 +47,20 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         self._sr = value
         self._cast_audio(value)
 
-    def _cast_audio(self: SegmentTedliumDataset, sr: int) -> None:
+    def _cast_audio(self, sr: int) -> None:
         if self.is_cleaned:
             raise RuntimeError("Cannot change sample rate of a cleaned dataset")
-
+        assert self._dataset is not None
         self._dataset = self._dataset.cast_column("audio", Audio(sampling_rate=sr))
 
     @override
-    def _get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> Sample:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get sample from a cleaned dataset")
+        assert self._dataset is not None
         data = self._dataset[idx]
 
-        def load_audio_func():
+        def load_audio_func() -> np.ndarray:
             samples = data["audio"].get_all_samples()
             wav = samples.data.mean(dim=0).detach().cpu().numpy()
             return wav

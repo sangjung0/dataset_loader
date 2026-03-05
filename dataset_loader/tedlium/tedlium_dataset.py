@@ -8,20 +8,19 @@ import pandas as pd
 from typing import Sequence
 from typing_extensions import override
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
 
 class TedliumDataset(ParquetDataset):
     def __init__(
-        self: TedliumDataset,
+        self,
         *,
         parquet: pd.DataFrame,
         sr: int,
-        use_cache: int = 0,
         ignore_set: Sequence[str] = [],
     ):
-        super().__init__(parquet=parquet, use_cache=use_cache)
+        super().__init__(parquet=parquet)
         self._sr = sr
         self._ignore_set = list(ignore_set)
 
@@ -30,18 +29,21 @@ class TedliumDataset(ParquetDataset):
         return {**super().args, "ignore_set": self._ignore_set, "sr": self._sr}
 
     @property
-    def sr(self: TedliumDataset) -> int:
+    def sr(self) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self: TedliumDataset, value: int) -> None:
+    def sr(self, value: int) -> None:
         if isinstance(value, int) and value > 0:
             self._sr = value
         else:
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def _get(self: TedliumDataset, idx: int) -> Sample:
+    def get(self, idx: int) -> Sample:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get sample from a cleaned dataset")
+
         data = self._parquet.iloc[idx].to_dict()
 
         def load_audio_func() -> np.ndarray:

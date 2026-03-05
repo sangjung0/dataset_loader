@@ -4,29 +4,24 @@ import re
 import librosa
 import numpy as np
 
+from typing import Any
 from typing_extensions import override
 from datasets import Dataset
 from pathvalidate import sanitize_filepath
 
 from dataset_loader.abstract import HuggingfaceDataset
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 
 
 class ZerothKoreanDataset(HuggingfaceDataset):
-    def __init__(
-        self,
-        *,
-        dataset: Dataset,
-        sr: int,
-        use_cache: int = 0,
-    ):
-        super().__init__(dataset=dataset, use_cache=use_cache)
+    def __init__(self, *, dataset: Dataset, sr: int):
+        super().__init__(dataset=dataset)
         self._sr = sr
         self._original_sr = sr
 
     @HuggingfaceDataset.args.getter
     @override
-    def args(self: ZerothKoreanDataset) -> dict:
+    def args(self) -> dict[str, Any]:
         if self._is_cleaned:
             raise RuntimeError("Cannot get args of a cleaned dataset")
         return {
@@ -45,7 +40,10 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         self._sr = value
 
     @override
-    def _get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> Sample:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get sample from a cleaned dataset")
+        assert self._dataset is not None
         data = self._dataset[idx]
         _id = sanitize_filepath(data["path"])[-255:]
 

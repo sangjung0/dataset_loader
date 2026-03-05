@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 import numpy as np
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 
 
 class TestSample:

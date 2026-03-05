@@ -1,21 +1,23 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-import warnings
 import numpy as np
 
-from typing import Sequence, TypeVar, Generic
-from typing_extensions import override
+from typing import TypeVar, Generic, Any
+from typing_extensions import override, Self
+from collections.abc import Sequence, Iterable, Mapping
 
-from dataset_loader.interface.dataset import Dataset
+from dataset_loader.protocol import ConcatDatasetProtocol, DatasetProtocol
+
+from dataset_loader.base.dataset import Dataset
 
 if TYPE_CHECKING:
-    from dataset_loader.interface.sample import Sample
+    from dataset_loader.base.sample import Sample
 
-T = TypeVar("T", bound="Dataset")
+T = TypeVar("T", bound=Dataset)
 
 
-class ConcatDataset(Dataset, Generic[T]):
+class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
     """
     여러 Dataset을 하나로 합치는 기능을 제공하는 클래스이다. 이 클래스는 Dataset을 상속하여 구현되며, 내부적으로 여러 Dataset을 리스트로 관리한다. \n
     ConcatDataset은 각 Dataset의 샘플을 순차적으로 연결하여 하나의 큰 Dataset처럼 동작한다.
@@ -26,49 +28,46 @@ class ConcatDataset(Dataset, Generic[T]):
         ValueError: datasets가 비어있을 경우 발생한다.
     """
 
-    def __init__(
-        self: ConcatDataset,
-        *,
-        datasets: Sequence[T],
-        use_cache: int = 0,
-    ):
+    def __init__(self, *, datasets: Sequence[T]):
         if len(datasets) == 0:
             raise ValueError("At least one dataset is required")
 
+        dts = []
         for dataset in datasets:
             if dataset.is_cleaned:
                 raise ValueError("Cannot concatenate a cleaned dataset")
-            if dataset.use_cache > 0 and use_cache > 0:
-                warnings.warn(
-                    f"Dataset {dataset} has caching enabled (use_cache={dataset.use_cache}), but the concatenated dataset also has caching enabled (use_cache={use_cache}). This may lead to increased memory usage."
-                )
+            dts.append(dataset)
 
-        super().__init__(use_cache=use_cache)
-        self._datasets: list[Dataset] = list(datasets)
+        super().__init__()
+        self._datasets: list[T] = list(dts)
 
     @property
-    def datasets(self: ConcatDataset) -> list[T]:
+    @override
+    def datasets(self) -> list[T]:
         return self._datasets.copy()
 
     @Dataset.args.getter
     @override
-    def args(self: ConcatDataset) -> dict:
+    def args(self) -> dict[str, Any]:
         return {**super().args, "datasets": self._datasets}
 
     @Dataset.length.getter
     @override
-    def length(self: ConcatDataset) -> int:
+    def length(self) -> int:
         return sum(len(ds) for ds in self._datasets)
 
     @Dataset.name.getter
     @override
-    def name(self: ConcatDataset) -> list[str]:
+    def name(self) -> str:
+        return "-".join(self.names)
+
+    @property
+    @override
+    def names(self) -> list[str]:
         return [ds.name for ds in self._datasets]
 
     @override
-    def select(
-        self: ConcatDataset, indices: Sequence[int], *, use_cache: int = 0
-    ) -> ConcatDataset:
+    def select(self, indices: Iterable[int]) -> Self:
         if self.is_cleaned:
             raise RuntimeError("Cannot select from a cleaned dataset")
 
@@ -82,22 +81,16 @@ class ConcatDataset(Dataset, Generic[T]):
             if ds_indices := [
                 i - start for i in normalized_indices if start <= i < end
             ]:
-                selected_datasets.append(ds.select(ds_indices, use_cache=use_cache))
+                selected_datasets.append(ds.select(ds_indices))
             start = end
         args = self.args
         args["datasets"] = selected_datasets
-        args["use_cache"] = use_cache
         return type(self)(**args)
 
     @override
     def slice(
-        self: ConcatDataset,
-        start: int | None = None,
-        stop: int | None = None,
-        step: int | None = None,
-        *,
-        use_cache: int = 0,
-    ) -> ConcatDataset:
+        self, start: int | None = None, stop: int | None = None, step: int | None = None
+    ) -> Self:
         if self.is_cleaned:
             raise RuntimeError("Cannot slice a cleaned dataset")
 
@@ -112,38 +105,33 @@ class ConcatDataset(Dataset, Generic[T]):
         if step <= 0:
             raise ValueError("Step must be a positive integer")
 
-        return self.select(list(range(start, stop, step)), use_cache=use_cache)
+        return self.select(list(range(start, stop, step)))
 
     @override
     def _sample(
-        self: ConcatDataset,
+        self,
         size: int,
         start: int = 0,
         *,
         rng: np.random.Generator | np.random.RandomState | None = None,
-        use_cache: int = 0,
-    ):
+    ) -> Self:
         if rng is not None:
             raise NotImplementedError("Random sampling is not implemented")
-        return self.slice(start=start, stop=start + size, use_cache=use_cache)
+        return self.slice(start=start, stop=start + size)
 
     @override
-    def concat(
-        self: ConcatDataset, other: Dataset | ConcatDataset, *, use_cache: int = 0
-    ) -> ConcatDataset:
+    def concat(self, other: ConcatDatasetProtocol | DatasetProtocol) -> ConcatDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
         elif isinstance(other, ConcatDataset):
-            return ConcatDataset(
-                datasets=self._datasets + other._datasets, use_cache=use_cache
-            )
+            return ConcatDataset(datasets=self._datasets + other._datasets)
         elif isinstance(other, Dataset):
-            return ConcatDataset(datasets=self._datasets + [other], use_cache=use_cache)
+            return ConcatDataset(datasets=self._datasets + [other])
         else:
             raise TypeError("Invalid type for concatenation")
 
     @override
-    def clean(self: ConcatDataset) -> None:
+    def clean(self) -> None:
         if self.is_cleaned:
             return
         for ds in self._datasets:
@@ -152,7 +140,7 @@ class ConcatDataset(Dataset, Generic[T]):
         super().clean()
 
     @override
-    def _get(self: ConcatDataset, idx: int) -> Sample:
+    def get(self, idx: int) -> Sample:
         start = 0
         for ds in self._datasets:
             d_idx = idx - start
@@ -162,7 +150,7 @@ class ConcatDataset(Dataset, Generic[T]):
         raise IndexError("Index out of range")
 
     @override
-    def to_dict(self: ConcatDataset) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         args = self.args
@@ -173,7 +161,8 @@ class ConcatDataset(Dataset, Generic[T]):
 
     @classmethod
     @override
-    def from_dict(cls: type[ConcatDataset], data: dict) -> ConcatDataset:
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
+        data = {**data}
         method = data.pop("method")
         if method == "from_dict":
             classes = data.pop("classes")
@@ -182,14 +171,14 @@ class ConcatDataset(Dataset, Generic[T]):
                 for _class, ds in zip(classes, data.pop("datasets"))
             ]
         elif method == "from_pointer":
-            data["datasets"] = [Dataset.from_pointer(ds) for ds in data.pop("datasets")]
+            data["datasets"] = [Dataset.from_config(ds) for ds in data.pop("datasets")]
         else:
             raise ValueError(f"Invalid method for deserialization: {method}")
 
         return cls(**data)
 
     @override
-    def to_pointer(self: ConcatDataset) -> dict:
+    def to_config(self: ConcatDataset) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         args = self.args

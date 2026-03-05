@@ -4,44 +4,42 @@ import re
 import numpy as np
 import pandas as pd
 
+from typing import Any
 from typing_extensions import override
 
 from sjpy.audio import load_from_mp4_file
 
-from dataset_loader.interface import Sample
+from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
 from dataset_loader.esic.constants import VERBATIM
 
 
 class ESICv1Dataset(ParquetDataset):
-    def __init__(
-        self: ESICv1Dataset,
-        *,
-        parquet: pd.DataFrame,
-        sr: int,
-        use_cache: int = 0,
-    ):
-        super().__init__(parquet=parquet, use_cache=use_cache)
+    def __init__(self, *, parquet: pd.DataFrame, sr: int):
+        super().__init__(parquet=parquet)
         self._sr: int = sr
 
     @ParquetDataset.args.getter
-    def args(self: ESICv1Dataset) -> dict:
+    def args(self) -> dict[str, Any]:
         return {**super().args, "sr": self._sr}
 
     @property
-    def sr(self: ESICv1Dataset) -> int:
+    def sr(self) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self: ESICv1Dataset, value: int) -> None:
+    def sr(self, value: int) -> None:
         if isinstance(value, int) and value > 0:
             self._sr = value
         else:
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def _get(self: ESICv1Dataset, idx: int) -> Sample:
+    def get(self, idx: int) -> Sample:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot get sample from a cleaned dataset.")
+
         data = self._parquet.iloc[idx].to_dict()
 
         def load_audio_func() -> np.ndarray:

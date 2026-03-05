@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import pytest
-
 from dataset_loader.wrapper.asr import ASRDataset, ASRSample, ASRConcatDataset
 
-from tests.unit.interface import MixinDatasetTest
+from tests.unit.protocol import MixinDatasetProtocolTest
 
 THREAD_ITER_TEST_SIZE = 20
 
 
-class MixinASRDatasetTest:
+class MixinASRDatasetTest(MixinDatasetProtocolTest):
     """
     Need: asr_dataset, samples
     """
@@ -46,42 +44,45 @@ class MixinASRDatasetTest:
                 break
 
     def test_asr__len__(self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]):
-        MixinDatasetTest.test__len__(self, asr_dataset, asr_samples)
+        type(self).assert__len__(asr_dataset, asr_samples)
 
     def test_asr__iter__(self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]):
-        MixinDatasetTest.test__iter__(self, asr_dataset, asr_samples)
+        type(self).assert__iter__(asr_dataset, asr_samples)
 
     def test_asr__getitem__(
         self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
     ):
-        MixinDatasetTest.test__getitem__(self, asr_dataset, asr_samples)
+        type(self).assert__getitem__(asr_dataset, asr_samples)
 
     def test_asr_select(self, asr_dataset: ASRDataset):
-        MixinDatasetTest.test_select(self, asr_dataset)
+        type(self).assert_select(asr_dataset)
 
     def test_asr_slice(self, asr_dataset: ASRDataset):
-        MixinDatasetTest.test_slice(self, asr_dataset)
+        type(self).assert_slice(asr_dataset)
 
     def test_asr_sample(self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]):
-        MixinDatasetTest.test_sample(self, asr_dataset, asr_samples)
+        type(self).assert_sample(asr_dataset, asr_samples)
 
     def test_asr_get(self, asr_dataset: ASRDataset):
-        MixinDatasetTest.test_get(self, asr_dataset)
+        type(self).assert_get(asr_dataset)
 
     def test_asr__add__(self, asr_dataset: ASRDataset):
-        MixinDatasetTest.test__add__(self, asr_dataset, ASRConcatDataset)
+        type(self).assert__add__(asr_dataset, ASRConcatDataset)
 
     def test_asr_to_dict_and_from_dict(
         self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
     ):
-        MixinDatasetTest.test_to_dict_and_from_dict(self, asr_dataset, asr_samples)
+        type(self).assert_to_dict_and_from_dict(asr_dataset, asr_samples)
 
     def test_asr_to_pointer_and_from_pointer(
         self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
     ):
-        MixinDatasetTest.test_to_pointer_and_from_pointer(
-            self, asr_dataset, asr_samples, ASRDataset
+        type(self).assert_to_config_and_from_config(
+            asr_dataset, asr_samples, ASRDataset
         )
 
-    def test_sample_identity(self, asr_dataset: ASRDataset):
-        MixinDatasetTest.test_sample_identity(self, asr_dataset)
+    def test_asr_sample_identity(self, asr_dataset: ASRDataset):
+        type(self).assert_sample_identity(asr_dataset)
+
+
+__all__ = ["MixinASRDatasetTest"]

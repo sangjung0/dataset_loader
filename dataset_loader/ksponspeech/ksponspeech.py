@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing_extensions import override
 
 from dataset_loader.abstract import HuggingfaceLoader
 
@@ -14,7 +15,7 @@ from dataset_loader.ksponspeech.constants import (
 
 class KSPonSpeech(HuggingfaceLoader):
     def __init__(
-        self: KSPonSpeech,
+        self,
         *,
         repo_id: str = DEFAULT_REPO_ID,
         dir_name: str | None = None,
@@ -22,40 +23,36 @@ class KSPonSpeech(HuggingfaceLoader):
     ):
         super().__init__(repo_id=repo_id, dir_name=dir_name, path=path)
 
-    def split_names(
-        self: KSPonSpeech, config_name: str = DEFAULT_CONFIG_NAME
-    ) -> list[str]:
+    @override
+    def split_names(self, config_name: str = DEFAULT_CONFIG_NAME) -> list[str]:
         return super().split_names(config_name)
 
     def train(
-        self: KSPonSpeech,
+        self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        use_cache: int = 0,
         **kwargs,
-    ):
+    ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
-        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def valid(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        use_cache: int = 0,
         **kwargs,
-    ):
+    ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="valid", **kwargs)
-        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        use_cache: int = 0,
         **kwargs,
-    ):
+    ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
-        return KSPonSpeechDataset(dataset=dataset, sr=sr, use_cache=use_cache)
+        return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
 
 __all__ = ["KSPonSpeech"]

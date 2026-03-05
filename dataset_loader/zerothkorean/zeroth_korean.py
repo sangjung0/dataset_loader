@@ -29,21 +29,19 @@ class ZerothKorean(HuggingfaceLoader):
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        use_cache: int = 0,
         **kwargs,
-    ):
+    ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
-        return ZerothKoreanDataset(dataset=dataset, sr=sr, use_cache=use_cache)
+        return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        use_cache: int = 0,
         **kwargs,
-    ):
+    ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
-        return ZerothKoreanDataset(dataset=dataset, sr=sr, use_cache=use_cache)
+        return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
 
 __all__ = ["ZerothKorean"]

@@ -4,6 +4,7 @@ import pandas as pd
 
 from typing import Sequence
 from typing_extensions import override
+from collections.abc import Mapping
 
 from dataset_loader.abstract import ParquetLoader
 
@@ -24,11 +25,11 @@ class Tedlium(ParquetLoader):
     """
 
     def __init__(
-        self: Tedlium,
+        self,
         *,
         dir_name: str | None = None,
         path: str | None = None,
-        parquet_name_and_path: dict[str, str] | None = None,
+        parquet_name_and_path: Mapping[str, str] | None = None,
     ):
         if parquet_name_and_path is None:
             parquet_name_and_path = DATA_PARQUET
@@ -37,26 +38,21 @@ class Tedlium(ParquetLoader):
         )
 
     @override
-    def download(self: Tedlium, *args, **kwargs):
+    def download(self, *args, **kwargs) -> None:
         raise NotImplementedError(
             "Tedlium dataset is not available for download. Please download it manually from the official website and place it in the specified directory."
         )
 
     @override
     def load(
-        self: Tedlium, *, name: TedliumSet, prepare_dir: str = ".prepare"
+        self, *, name: TedliumSet | str, prepare_dir: str = ".prepare"
     ) -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
         data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)
         return data
 
     @override
-    def _parse_files(
-        self: Tedlium,
-        *,
-        name: str,
-        verbose: bool = False,
-    ) -> list[dict[str, str]]:
+    def _parse_files(self, *, name: str, verbose: bool = False) -> list[dict[str, str]]:
         from dataset_loader.tedlium.algorithm import (
             parse_ctl_hashes,
             parse_files,
@@ -84,43 +80,34 @@ class Tedlium(ParquetLoader):
             )
 
     def train(
-        self: Tedlium,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
         ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
-    ):
+    ) -> TedliumDataset:
         data = self.load(name="train", prepare_dir=prepare_dir)
-        return TedliumDataset(
-            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return TedliumDataset(parquet=data, sr=sr, ignore_set=ignore_set)
 
     def dev(
-        self: Tedlium,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
         ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
-    ):
+    ) -> TedliumDataset:
         data = self.load(name="dev", prepare_dir=prepare_dir)
-        return TedliumDataset(
-            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return TedliumDataset(parquet=data, sr=sr, ignore_set=ignore_set)
 
     def test(
-        self: Tedlium,
+        self,
         *,
         sr: int = DEFAULT_SAMPLE_RATE,
         prepare_dir: str = ".prepare",
-        use_cache: int = 0,
         ignore_set: Sequence[str] = DEFAULT_IGNORE_SET,
-    ):
+    ) -> TedliumDataset:
         data = self.load(name="test", prepare_dir=prepare_dir)
-        return TedliumDataset(
-            parquet=data, sr=sr, use_cache=use_cache, ignore_set=ignore_set
-        )
+        return TedliumDataset(parquet=data, sr=sr, ignore_set=ignore_set)
 
 
 __all__ = ["Tedlium"]

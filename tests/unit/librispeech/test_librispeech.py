@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from dataset_loader.interface import Dataset, Sample
+from dataset_loader.base import Sample
 from dataset_loader.librispeech import LibriSpeech, LibriSpeechDataset
-from dataset_loader.wrapper.asr import ASRDataset, ASRSample
+from dataset_loader.wrapper.asr import ASRDataset, ASRSample, ASRDatasetProtocol
 
-from tests.unit.interface import MixinDatasetTest
+from tests.unit.base import MixinDatasetTest
 from tests.unit.wrapper.asr import MixinASRDatasetTest
 
 SAMPLE_SIZE = 200
@@ -33,15 +33,17 @@ class TestLibriSpeech(MixinASRDatasetTest, MixinDatasetTest):
     ) -> LibriSpeechDataset:
         method = request.param["method"]
         sample_size = request.param["sample_size"]
-        dataset: Dataset = getattr(librispeech, method.replace("-", "_"))()
+        dataset: LibriSpeechDataset = getattr(librispeech, method.replace("-", "_"))()
         return dataset.sample(sample_size)
 
     @pytest.fixture
-    def samples(self, dataset: Dataset) -> list[Sample]:
+    def samples(self, dataset: LibriSpeechDataset) -> list[Sample]:
         return [sample for sample in dataset]
 
     @pytest.fixture
-    def asr_dataset(self, dataset: Dataset) -> ASRDataset:
+    def asr_dataset(self, dataset: LibriSpeechDataset) -> ASRDataset:
+        if not isinstance(dataset, ASRDatasetProtocol):
+            raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
         return ASRDataset(dataset)
 
     @pytest.fixture

@@ -5,16 +5,16 @@ from typing import Literal
 # Defaults Segment Tedlium
 DEFAULT_SEGMENT_REPO_ID = "distil-whisper/tedlium"
 DEFAULT_SEGMENT_SAMPLE_RATE = 16_000
-DEFAULT_SEGMENT_IGNORE_SET = [
+DEFAULT_SEGMENT_IGNORE_SET = (
     "ignore_time_segment_in_scoring",
     "inter_segment_gap",
     "<unk>",
-]
+)
 
 # Defaults Tedlium
 TedliumSet = Literal["train", "dev", "test"]
 DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_IGNORE_SET = ["ignore_time_segment_in_scoring", "inter_segment_gap", "<unk>"]
+DEFAULT_IGNORE_SET = ("ignore_time_segment_in_scoring", "inter_segment_gap", "<unk>")
 DATA_PARQUET = {
     "train": "train.parquet",
     "dev": "dev.parquet",

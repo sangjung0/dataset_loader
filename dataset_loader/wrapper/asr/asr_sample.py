@@ -1,23 +1,30 @@
+from __future__ import annotations
+
 import numpy as np
 
 from typing import Any, Callable
-from typing_extensions import Self
 from dataclasses import dataclass, field
 from functools import cached_property
+from collections.abc import Mapping, MutableMapping
 
-from dataset_loader.interface.sample import Sample
+from dataset_loader.protocol import SampleProtocol
+from dataset_loader.base.sample import Sample
 
 
 @dataclass(frozen=True)
-class ASRSample:
-    sample: Sample = field(compare=False, hash=False, repr=False)
+class ASRSample(SampleProtocol):
+    sample: SampleProtocol = field(compare=False, hash=False, repr=False)
 
     @property
     def id(self) -> str:
         return self.sample.id
 
+    @property
+    def data(self) -> MutableMapping[str, Any]:
+        return self.sample.data
+
     @cached_property
-    def audio(self) -> np.ndarray | Callable[[], np.ndarray]:
+    def audio(self) -> np.ndarray:
         return self.sample.data["load_audio_func"]()
 
     @property
@@ -40,11 +47,11 @@ class ASRSample:
             return False
         return self.sample == other.sample
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> MutableMapping[str, Any]:
         return self.sample.to_dict()
 
     @staticmethod
-    def from_dict(data: dict) -> Self:
+    def from_dict(data: Mapping[str, Any]) -> ASRSample:
         return ASRSample(sample=Sample.from_dict(data))
 
     @staticmethod
@@ -53,8 +60,8 @@ class ASRSample:
         load_audio_func: Callable[[], np.ndarray] | None = None,
         audio: np.ndarray | None = None,
         ref: str | None = None,
-        diarization: list[dict[str, Any]] | None = None,
-    ) -> Self:
+        diarization: list[Mapping[str, Any]] | None = None,
+    ) -> ASRSample:
         data = {
             "load_audio_func": (load_audio_func if audio is None else (lambda: audio)),
             "ref": ref,

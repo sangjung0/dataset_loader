@@ -5,12 +5,10 @@ from typing import Generic, TypeVar, Generator
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor, Future
 
-from dataset_loader.interface import Sample
-
-T = TypeVar("T", bound=Sample)
+T = TypeVar("T")
 
 
-class ThreadLoaderMixin(ABC, Generic[T]):
+class ThreadLoaderMixin(Generic[T], ABC):
     def thread_iter(
         self,
         *,
