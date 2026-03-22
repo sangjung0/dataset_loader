@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 
 from typing import Any
 from typing_extensions import override
@@ -60,10 +61,10 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         assert self._dataset is not None
         data = self._dataset[idx]
 
-        def load_audio_func() -> np.ndarray:
+        def load_audio_func() -> npt.NDArray[np.float32]:
             samples = data["audio"].get_all_samples()
             wav = samples.data.mean(dim=0).detach().cpu().numpy()
-            return wav
+            return wav.astype(np.float32)
 
         text = data["text"].strip()
         if text in self._ignore_set:

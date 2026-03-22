@@ -3,6 +3,7 @@ import re
 
 import librosa
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from typing import Sequence
@@ -46,10 +47,10 @@ class TedliumDataset(ParquetDataset):
 
         data = self._parquet.iloc[idx].to_dict()
 
-        def load_audio_func() -> np.ndarray:
+        def load_audio_func() -> npt.NDArray[np.float32]:
             audio_path = data["audio_path"]
             wav, _ = librosa.load(audio_path, sr=self._sr)
-            return wav
+            return wav.astype(np.float32)
 
         diarization = data.pop("stm")
         ref = data["text"]

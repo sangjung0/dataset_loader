@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import numpy as np
+import numpy.typing as npt
 
 from typing import Any
 from typing_extensions import override
@@ -62,9 +63,15 @@ class KSPonSpeechDataset(HuggingfaceDataset):
         data = self._dataset[idx]
         _id = sanitize_filepath(data["path"])[-255:]
 
-        def load_audio() -> np.ndarray:
+        def load_audio() -> npt.NDArray[np.float32]:
             return (
-                data["audio"].get_all_samples().data.mean(dim=0).detach().cpu().numpy()
+                data["audio"]
+                .get_all_samples()
+                .data.mean(dim=0)
+                .detach()
+                .cpu()
+                .numpy()
+                .astype(np.float32)
             )
 
         result = {

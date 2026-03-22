@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import librosa
 import numpy as np
+import numpy.typing as npt
 
 from typing import Any
 from typing_extensions import override
@@ -47,7 +48,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         data = self._dataset[idx]
         _id = sanitize_filepath(data["path"])[-255:]
 
-        def load_audio() -> np.ndarray:
+        def load_audio() -> npt.NDArray[np.float32]:
             return self._resample_audio(data["audio"]["array"]).astype(np.float32)
 
         result = {
@@ -64,12 +65,14 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         }
         return Sample(id=_id, data=result)
 
-    def _resample_audio(self, audio: np.ndarray) -> np.ndarray:
+    def _resample_audio(
+        self, audio: npt.NDArray[np.float32]
+    ) -> npt.NDArray[np.float32]:
         if self._sr != self._original_sr:
             audio = librosa.resample(
                 audio, orig_sr=self._original_sr, target_sr=self._sr
             )
-        return audio
+        return audio.astype(np.float32)
 
 
 __all__ = ["ZerothKoreanDataset"]

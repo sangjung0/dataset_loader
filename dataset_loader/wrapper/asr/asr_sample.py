@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import numpy.typing as npt
 
 from typing import Any, Callable
 from dataclasses import dataclass, field
@@ -24,7 +25,7 @@ class ASRSample(SampleProtocol):
         return self.sample.data
 
     @cached_property
-    def audio(self) -> np.ndarray:
+    def audio(self) -> npt.NDArray[np.float32]:
         return self.sample.data["load_audio_func"]()
 
     @property
@@ -57,8 +58,8 @@ class ASRSample(SampleProtocol):
     @staticmethod
     def create(
         id: str,
-        load_audio_func: Callable[[], np.ndarray] | None = None,
-        audio: np.ndarray | None = None,
+        load_audio_func: Callable[[], npt.NDArray[np.float32]] | None = None,
+        audio: npt.NDArray[np.float32] | None = None,
         ref: str | None = None,
         diarization: list[Mapping[str, Any]] | None = None,
     ) -> ASRSample:

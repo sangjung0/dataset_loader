@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 
 from typing import Any
@@ -42,7 +43,7 @@ class ESICv1Dataset(ParquetDataset):
 
         data = self._parquet.iloc[idx].to_dict()
 
-        def load_audio_func() -> np.ndarray:
+        def load_audio_func() -> npt.NDArray[np.float32]:
             mp4_path = data["mp4_path"]
             wav, _ = load_from_mp4_file(mp4_path, self._sr)
             return wav

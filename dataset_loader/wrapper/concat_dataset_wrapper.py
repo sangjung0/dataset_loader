@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-import numpy as np
-
-from abc import ABC, abstractmethod
-from typing import Generator, Any, overload, TypeVar, Generic
-from typing_extensions import Self
-from collections.abc import Mapping, Sequence
+from abc import ABC
+from typing import TypeVar
+from collections.abc import Sequence
 
 from dataset_loader.protocol import (
-    DatasetProtocol,
     SampleProtocol,
     ConcatDatasetProtocol,
 )
-from dataset_loader.base import Dataset, ConcatDataset
 
 from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
 

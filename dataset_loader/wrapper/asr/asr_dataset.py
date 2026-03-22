@@ -1,10 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Mapping
 
-from typing import Sequence, overload, Any, cast
+from typing import Sequence, overload
 from typing_extensions import Self, override
 
-from dataset_loader.base import ConcatDataset, Dataset, Sample
+from dataset_loader.base import Sample
 from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
 
 from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
@@ -12,7 +12,6 @@ from dataset_loader.wrapper.thread_loader_mixin import ThreadLoaderMixin
 
 from dataset_loader.wrapper.asr.asr_sample import ASRSample
 from dataset_loader.wrapper.asr.protocol import (
-    ASRConcatDatasetProtocol,
     ASRDatasetProtocol,
 )
 
@@ -62,6 +61,11 @@ class ASRDataset(
     def _loader(self, sample: ASRSample) -> ASRSample:
         _ = sample.audio  # Force loading audio
         return sample
+
+    @override
+    @classmethod
+    def from_config(cls, data: Mapping[str, Any]) -> ASRDataset:
+        return super().from_config(data)
 
 
 __all__ = ["ASRDataset"]
