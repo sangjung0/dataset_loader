@@ -232,7 +232,7 @@ class DatasetWrapper(DatasetProtocol, Generic[Dts, Spl], ABC):
         }
 
     @classmethod
-    def from_config(cls, data: Mapping[str, Any]) -> DatasetWrapper:
+    def from_config(cls, data: Mapping[str, Any]) -> DatasetWrapper[Dts, Spl]:
         """
         to_config 메서드로 직렬화된 딕셔너리에서 DatasetWrapper 객체를 생성하는 클래스 메서드이다. 이 메서드는 데이터셋의 위치나 참조 정보를 저장하거나 전송한 후 다시 로드할 때 유용하다.
         Args:

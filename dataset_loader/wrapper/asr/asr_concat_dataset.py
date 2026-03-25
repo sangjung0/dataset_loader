@@ -57,11 +57,11 @@ class ASRConcatDataset(
     @override
     def concat(
         self, other: DatasetProtocol | ConcatDatasetProtocol
-    ) -> "ASRConcatDataset":
+    ) -> ASRConcatDataset:
         from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
 
         if isinstance(other, ASRConcatDataset) or isinstance(other, ASRDataset):
-            return ASRConcatDataset(self.dataset + other.dataset)
+            return ASRConcatDataset(self.dataset + other.dataset)  # type: ignore
         else:
             raise TypeError("Invalid type for concatenation")
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from functools import cached_property, lru_cache
+from typing import Sequence
 from typing_extensions import override
 from datasets import (
     load_dataset,
@@ -9,6 +10,7 @@ from datasets import (
     get_dataset_split_names,
     Dataset,
     DownloadConfig,
+    IterableDatasetDict,
 )
 
 from dataset_loader.base import DatasetLoader
@@ -49,22 +51,27 @@ class HuggingfaceLoader(DatasetLoader):
         self,
         *,
         config_name: str,
-        split_name: str,
+        split_name: str | Sequence[str] | None = None,
         local_files_only: bool = False,
-    ) -> Dataset:
+    ) -> Dataset | IterableDatasetDict:
         if config_name not in self.config_names:
             raise ValueError(
                 f"Config name '{config_name}' is not valid. Available configs: {self.config_names}"
             )
-        if split_name not in self.split_names(config_name):
+        if split_name is None:
+            split_name = self.split_names(config_name)
+        if isinstance(split_name, str):
+            split_name = [split_name]
+        if not all(s in self.split_names(config_name) for s in split_name):
             raise ValueError(
-                f"Split '{split_name}' is not valid for config '{config_name}'. Available splits: {self.split_names(config_name)}"
+                f"One or more split names are not valid for config '{config_name}'. Available splits: {self.split_names(config_name)}"
             )
+
         return load_dataset(
             self.repo_id,
             name=config_name,
             cache_dir=str(self.path),
-            split=split_name,
+            split=list(split_name),
             download_config=DownloadConfig(local_files_only=local_files_only),
         )
 
@@ -73,9 +80,9 @@ class HuggingfaceLoader(DatasetLoader):
         self,
         *,
         config_name: str,
-        split_name: str,
+        split_name: str | Sequence[str],
         local_files_only: bool = False,
-    ) -> Dataset:
+    ) -> Dataset | IterableDatasetDict:
         dir_name = self.repo_id.replace("/", "___")
         path = self.path / dir_name
         if not path.exists():

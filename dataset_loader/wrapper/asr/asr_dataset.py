@@ -49,7 +49,7 @@ class ASRDataset(
         from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
 
         if isinstance(other, ASRConcatDataset) or isinstance(other, ASRDataset):
-            return ASRConcatDataset(self.dataset + other.dataset)
+            return ASRConcatDataset(dataset=self.dataset + other.dataset)  # type: ignore
         else:
             raise TypeError("Invalid type for concatenation")
 
@@ -65,7 +65,8 @@ class ASRDataset(
     @override
     @classmethod
     def from_config(cls, data: Mapping[str, Any]) -> ASRDataset:
-        return super().from_config(data)
+        # TODO 이거는 문제가 있음. from_config가 ASRDataset을 보장하지 못함. 수정할 것.
+        return super().from_config(data)  # type: ignore
 
 
 __all__ = ["ASRDataset"]

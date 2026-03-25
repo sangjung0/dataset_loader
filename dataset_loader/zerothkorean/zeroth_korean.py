@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Sequence
+from typing_extensions import override
+from datasets import Dataset, IterableDatasetDict
 
 from dataset_loader.abstract import HuggingfaceLoader
 
@@ -25,6 +28,20 @@ class ZerothKorean(HuggingfaceLoader):
     def split_names(self, config_name: str = DEFAULT_CONFIG_NAME) -> list[str]:
         return super().split_names(config_name)
 
+    @override
+    def download(
+        self,
+        *,
+        config_name: str = DEFAULT_CONFIG_NAME,
+        split_name: str | Sequence[str] | None = None,
+        local_files_only: bool = False,
+    ) -> Dataset | IterableDatasetDict:
+        return super().download(
+            config_name=config_name,
+            split_name=split_name,
+            local_files_only=local_files_only,
+        )
+
     def train(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
@@ -32,6 +49,8 @@ class ZerothKorean(HuggingfaceLoader):
         **kwargs,
     ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
+        if isinstance(dataset, (IterableDatasetDict, list)):
+            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)  # type: ignore
         return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
     def test(
@@ -41,6 +60,8 @@ class ZerothKorean(HuggingfaceLoader):
         **kwargs,
     ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
+        if isinstance(dataset, (IterableDatasetDict, list)):
+            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)  # type: ignore
         return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
 

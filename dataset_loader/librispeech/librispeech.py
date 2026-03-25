@@ -56,7 +56,7 @@ class LibriSpeech(ParquetLoader):
     def download(
         self: LibriSpeech,
         *,
-        name: list[str | LibriSpeechSet] | Literal["all"],
+        name: list[str | LibriSpeechSet] | Literal["all"] = "all",
         url: Mapping[str, str] | None = None,
         verbose: bool = True,
     ) -> list[Path]: ...
@@ -69,7 +69,7 @@ class LibriSpeech(ParquetLoader):
         verbose: bool = True,
     ) -> Path | list[Path]:
         if name == "all":
-            if not (isinstance(url, Mapping) and url is None):
+            if not (isinstance(url, Mapping) or url is None):
                 raise ValueError("URL must be a mapping or None when name is 'all'.")
             return self.download(
                 name=list(self._download_urls.keys()), url=url, verbose=verbose
