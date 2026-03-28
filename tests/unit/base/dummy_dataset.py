@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Any
+from typing import Any, Iterable
 from typing_extensions import override
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 
 from dataset_loader.base import Dataset, Sample
 
@@ -15,6 +15,12 @@ class DummyDataset(Dataset):
         self._samples = list(samples)
 
     @Dataset.args.getter
+    @override
+    def dataset(self: DummyDataset) -> DummyDataset:
+        return self
+
+    @Dataset.args.getter
+    @override
     def args(self: DummyDataset) -> dict:
         return {
             **super().args,
@@ -22,13 +28,14 @@ class DummyDataset(Dataset):
         }
 
     @Dataset.length.getter
+    @override
     def length(self: DummyDataset) -> int:
         if self.is_cleaned:
             raise RuntimeError("Cannot get length of a cleaned dataset")
         return len(self._samples)
 
     @override
-    def select(self: DummyDataset, indices: Sequence[int]) -> DummyDataset:
+    def select(self: DummyDataset, indices: Iterable[int]) -> DummyDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot select from a cleaned dataset")
         return DummyDataset(samples=[self._samples[i] for i in indices])

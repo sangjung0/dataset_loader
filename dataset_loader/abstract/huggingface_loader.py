@@ -87,7 +87,7 @@ class HuggingfaceLoader(DatasetLoader):
         path = self.path / dir_name
         if not path.exists():
             raise FileNotFoundError(
-                f"Dataset not found in cache. Please download it first using the 'download' method."
+                "Dataset not found in cache. Please download it first using the 'download' method."
             )
 
         return self.download(

@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from abc import ABC, abstractmethod
-from typing import Generator, Any, overload
-from typing_extensions import Self
-from collections.abc import Sequence, Mapping
+from typing import Generator, Any, overload, TypeVar, Iterable
+from typing_extensions import Self, override
+from collections.abc import Mapping
 
-from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
+from dataset_loader.protocol import DatasetProtocol
 from dataset_loader.base.sample import Sample
 
 
@@ -16,8 +16,10 @@ if TYPE_CHECKING:
     from dataset_loader.base.concat_dataset import ConcatDataset
 
 
-# TODO 현재 프로토콜과 상속 구조는 매우 별로다. 처음부터 믹스인을 채용했다면 훨씬 간편했을텐데.. 다음 수정시 믹스인으로 공통부분을 빼고 정확하게 상속과 프로토콜을 재구성하자.
-class Dataset(DatasetProtocol, ABC):
+T = TypeVar("T")
+
+
+class Dataset(DatasetProtocol[T, Sample], ABC):
     """
     다양한 Dataset을 위한 공통 추상 클래스이다. \n
     다른 라이브러리의 Dataset을 래핑하거나, 자체적으로 Dataset을 구현할 때 이 클래스를 상속하여 구현한다.
@@ -28,28 +30,41 @@ class Dataset(DatasetProtocol, ABC):
         self._is_cleaned = False
 
     @property
+    @abstractmethod
+    @override
+    def dataset(self) -> T:
+        raise NotImplementedError
+
+    @property
+    @override
     def args(self) -> dict[str, Any]:
         return {}
 
     @property
+    @override
     def is_cleaned(self) -> bool:
         return self._is_cleaned
 
     @property
     @abstractmethod
+    @override
     def length(self) -> int:
         raise NotImplementedError
 
+    @override
     def __len__(self) -> int:
         return self.length
 
     @property
+    @override
     def name(self) -> str:
         return self.__class__.__name__
 
+    @override
     def __iter__(self) -> Generator[Sample, Any, None]:
         yield from self.iter()
 
+    @override
     def iter(self) -> Generator[Sample, Any, None]:
         for idx in range(len(self)):
             yield self.get(idx)
@@ -57,34 +72,22 @@ class Dataset(DatasetProtocol, ABC):
     @overload
     def __getitem__(self, key: int) -> Sample: ...
     @overload
-    def __getitem__(self, key: slice | Sequence[int]) -> Self: ...
-    def __getitem__(self, key: int | slice | Sequence[int]) -> Sample | Self:
+    def __getitem__(self, key: slice | Iterable[int]) -> Self: ...
+    @override
+    def __getitem__(self, key: int | slice | Iterable[int]) -> Sample | Self:
         return self.getitem(key)
 
     @overload
     def getitem(self, key: int) -> Sample: ...
     @overload
-    def getitem(self, key: slice | Sequence[int]) -> Self: ...
-    def getitem(self, key: int | slice | Sequence[int]) -> Sample | Self:
-        """
-        key == int -> Sample \n
-        key == slice -> Self (using slice method) \n
-        key == Sequence[int] -> Self (using select method) \n
-
-        Args:
-            key (int | slice | Sequence[int]): 인덱스 또는 슬라이스 또는 인덱스 시퀀스
-        Returns:
-            result (Sample | Self): 요청된 샘플 또는 데이터셋
-
-        Raises:
-            IndexError: 인덱스가 범위를 벗어난 경우
-            TypeError: key의 타입이 int, slice, Sequence[int]이 아닌 경우
-        """
+    def getitem(self, key: slice | Iterable[int]) -> Self: ...
+    @override
+    def getitem(self, key: int | slice | Iterable[int]) -> Sample | Self:
         if self.is_cleaned:
             raise RuntimeError("Cannot access a cleaned dataset")
         elif isinstance(key, slice):
             return self.slice(start=key.start, stop=key.stop, step=key.step)
-        elif isinstance(key, Sequence):
+        elif isinstance(key, Iterable):
             return self.select(key)
         elif isinstance(key, int):
             n = len(self)
@@ -97,37 +100,21 @@ class Dataset(DatasetProtocol, ABC):
             raise TypeError("Invalid key type")
 
     @abstractmethod
-    def select(self, indices: Sequence[int]) -> Self:
-        """
-        주어진 인덱스 시퀀스에 해당하는 샘플들로 구성된 새로운 Dataset을 반환한다.
-        Args:
-            indices (Sequence[int]): 선택할 샘플의 인덱스 시퀀스
-        Returns:
-            Self: 선택된 샘플들로 구성된 데이터셋
-        """
+    @override
+    def select(self, indices: Iterable[int]) -> Self:
         raise NotImplementedError
 
     @abstractmethod
+    @override
     def slice(
         self,
         start: int | None = None,
         stop: int | None = None,
         step: int | None = None,
     ) -> Self:
-        """
-        주어진 슬라이스에 해당하는 샘플들로 구성된 새로운 Dataset을 반환한다.
-        Args:
-            start (int | None): 슬라이스의 시작 인덱스. 기본값은 None이며, 이 경우 0부터 시작한다.
-            stop (int | None): 슬라이스의 끝 인덱스. 기본값은 None이며, 이 경우 데이터셋의 끝까지 포함한다.
-            step (int | None): 슬라이스의 단계. 기본값은 None이며, 이 경우 1씩 증가한다.
-        Returns:
-            Self: 슬라이스에 해당하는 샘플들로 구성된 데이터셋
-        Raises:
-            IndexError: start 또는 stop이 유효한 인덱스 범위를 벗어난 경우
-            ValueError: stop이 start보다 작은 경우
-        """
         raise NotImplementedError
 
+    @override
     def sample(
         self,
         size: int = -1,
@@ -135,17 +122,6 @@ class Dataset(DatasetProtocol, ABC):
         *,
         rng: np.random.Generator | np.random.RandomState | None = None,
     ) -> Self:
-        """
-        데이터셋에서 무작위로 샘플링하여 새로운 Dataset을 반환한다.
-        Args:
-            size (int): 샘플링할 샘플의 수. 음수이면 start부터 끝까지 샘플링한다.
-            start (int): 샘플링을 시작할 인덱스. 기본값은 0이다.
-            rng (np.random.Generator | np.random.RandomState | None): 무작위 수 생성기. 기본값은 None이며, 이 경우 단순 슬라이싱이 수행된다.
-        Returns:
-            Self: 샘플링된 데이터셋
-        Raises:
-            IndexError: start가 유효한 인덱스 범위를 벗어난 경우
-        """
         if self.is_cleaned:
             raise RuntimeError("Cannot sample from a cleaned dataset")
         elif start < 0 or start >= len(self):
@@ -166,20 +142,12 @@ class Dataset(DatasetProtocol, ABC):
     ) -> Self:
         raise NotImplementedError
 
-    def __add__(self, other: ConcatDatasetProtocol | DatasetProtocol) -> ConcatDataset:
+    @override
+    def __add__(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
         return self.concat(other)
 
-    def concat(self, other: ConcatDatasetProtocol | DatasetProtocol) -> ConcatDataset:
-        """
-        self와 other을 연결하여 새로운 ConcatDataset을 반환한다.
-
-        Args:
-            other (Dataset | ConcatDataset | ConcatDatasetProtocol): 연결할 다른 데이터셋
-        Returns:
-            ConcatDataset: 연결된 데이터셋
-        Raises:
-            TypeError: other의 타입이 Dataset 또는 ConcatDataset이 아닌 경우
-        """
+    @override
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
 
@@ -194,32 +162,15 @@ class Dataset(DatasetProtocol, ABC):
 
     @abstractmethod
     def get(self, idx: int) -> Sample:
-        """
-        주어진 인덱스에 해당하는 샘플을 반환한다.
-        Args:
-            idx (int): 가져올 샘플의 인덱스
-        Returns:
-            Sample: 요청된 샘플
-        Raises:
-            IndexError: idx가 유효한 인덱스 범위를 벗어난 경우
-        """
         raise NotImplementedError
 
     @abstractmethod
     def clean(self) -> None:
-        """
-        데이터셋이 사용한 리소스를 정리하거나 해제하는 메서드이다. 이 메서드는 데이터셋이 더 이상 필요하지 않을 때 호출하여 리소스를 효율적으로 관리할 수 있도록 한다.
-        """
         if self.is_cleaned:
             return
         self._is_cleaned = True
 
     def to_dict(self) -> dict[str, Any]:
-        """
-        데이터셋을 딕셔너리로 변환한다. 이 메서드는 데이터셋의 상태를 직렬화하거나 저장할 때 유용하다.
-        Returns:
-            dict[str, Any]: 데이터셋의 상태를 나타내는 딕셔너리
-        """
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         return self.args
@@ -227,38 +178,20 @@ class Dataset(DatasetProtocol, ABC):
     @classmethod
     @abstractmethod
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
-        """
-        to_dict 메서드로 직렬화된 딕셔너리에서 Dataset 객체를 생성하는 클래스 메서드이다. 이 메서드는 데이터셋을 저장하거나 전송한 후 다시 로드할 때 유용하다.
-        Args:
-            data (dict): to_dict 메서드로 직렬화된 딕셔너리
-        Returns:
-            Self: 딕셔너리에서 생성된 데이터셋 객체
-        """
         raise NotImplementedError
 
-    def to_config(self) -> dict[str, Any]:
-        """
-        데이터셋을 포인터 딕셔너리로 변환한다. 이 메서드는 데이터셋의 위치나 참조를 나타내는 정보를 포함하는 딕셔너리를 반환한다.
-        """
+    def __getstate__(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         return {
             **self.to_dict(),
-            **self.extract_import_data(),
-            "type": self.__class__.__name__,
+            **self.__get_import__(),
         }
 
     @classmethod
-    def from_config(cls, data: Mapping[str, Any]) -> Dataset:
-        """
-        to_config 메서드로 직렬화된 딕셔너리에서 Dataset 객체를 생성하는 클래스 메서드이다. 이 메서드는 데이터셋의 위치나 참조 정보를 저장하거나 전송한 후 다시 로드할 때 유용하다.
-        Args:
-            data (dict): to_config 메서드로 직렬화된 딕셔너리
-        Returns:
-            Self: 딕셔너리에서 생성된 데이터셋 객체
-        """
+    def __setstate__(cls, data: Mapping[str, Any]) -> Dataset[T]:
         if all(k in data for k in ("module", "qualname", "type")):
-            data, dataset_cls = cls.import_from_config(data)
+            data, dataset_cls = cls.__set_import__(data)
         elif all(k not in data for k in ("module", "qualname", "type")):
             dataset_cls = cls
         else:
@@ -266,48 +199,31 @@ class Dataset(DatasetProtocol, ABC):
 
         if not issubclass(dataset_cls, Dataset):
             raise TypeError(f"{dataset_cls} is not a subclass of Dataset")
-        elif dataset_cls == Dataset:
+        elif dataset_cls == Dataset[T]:
             raise TypeError("Cannot instantiate Dataset directly")
 
         return dataset_cls.from_dict(data)
 
-    def extract_import_data(self) -> dict[str, Any]:
-        """
-        데이터셋에서 임포트 데이터를 추출하는 메서드이다. 이 메서드는 데이터셋이 외부 리소스나 참조를 포함하는 경우, 해당 정보를 추출하여 반환한다.
-        Returns:
-            dict[str, Any]: 임포트 데이터가 포함된 딕셔너리
-        """
+    def __get_import__(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot extract import data from a cleaned dataset")
         return {
             "module": self.__class__.__module__,
             "qualname": self.__class__.__qualname__,
+            "type": self.__class__.__name__,
         }
 
     @classmethod
-    def import_from_config(
+    def __set_import__(
         cls, data: Mapping[str, Any]
-    ) -> tuple[dict[str, Any], type[Dataset]]:
-        """
-        to_config 메서드로 직렬화된 딕셔너리를 가져와서 필요한 모듈을 동적으로 임포트하는 클래스 메서드이다. 이 메서드는 데이터셋의 위치나 참조 정보를 포함하는 딕셔너리를 처리할 때 유용하다.
-        Args:
-            data (Mapping[str, Any]): to_config 메서드로 직렬화된 딕셔너리
-        Returns:
-            tuple[dict[str, Any], type[Dataset]]: 임포트 데이터가 제거된 딕셔너리와 클래스 타입
-        """
-        import sys
-        from importlib import import_module
-        from functools import reduce
+    ) -> tuple[dict[str, Any], type[Dataset[T]]]:
+        from sjpy.reference import import_from
 
-        module, qual = data["module"], data["qualname"]
-        if module in ("__main__", "__mp_main__"):
-            m = sys.modules[module]
-        else:
-            m = import_module(module)
-        _class = reduce(getattr, qual.split("."), m)
+        _class = import_from(data)
+
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
-        elif not (issubclass(_class, Dataset)):
+        elif not issubclass(_class, Dataset):
             raise TypeError(f"{_class} is not a subclass of Dataset or DatasetWrapper")
         elif data["type"] != _class.__name__:
             raise TypeError(

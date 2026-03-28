@@ -1,23 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-from typing import TypeVar, Generic, Any
+from typing import Any
 from typing_extensions import override, Self
 from collections.abc import Sequence, Iterable, Mapping
 
-from dataset_loader.protocol import ConcatDatasetProtocol, DatasetProtocol
+from dataset_loader.protocol import DatasetProtocol
 
 from dataset_loader.base.dataset import Dataset
-
-if TYPE_CHECKING:
-    from dataset_loader.base.sample import Sample
-
-T = TypeVar("T", bound=Dataset)
+from dataset_loader.base.sample import Sample
 
 
-class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
+class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
     """
     여러 Dataset을 하나로 합치는 기능을 제공하는 클래스이다. 이 클래스는 Dataset을 상속하여 구현되며, 내부적으로 여러 Dataset을 리스트로 관리한다. \n
     ConcatDataset은 각 Dataset의 샘플을 순차적으로 연결하여 하나의 큰 Dataset처럼 동작한다.
@@ -28,7 +23,7 @@ class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
         ValueError: datasets가 비어있을 경우 발생한다.
     """
 
-    def __init__(self, *, datasets: Sequence[T]):
+    def __init__(self, *, datasets: Sequence[Dataset[Any]]):
         if len(datasets) == 0:
             raise ValueError("At least one dataset is required")
 
@@ -39,11 +34,11 @@ class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
             dts.append(dataset)
 
         super().__init__()
-        self._datasets: list[T] = list(dts)
+        self._datasets: list[Dataset[Any]] = list(dts)
 
     @property
     @override
-    def datasets(self) -> list[T]:
+    def dataset(self) -> list[Dataset[Any]]:
         return self._datasets.copy()
 
     @Dataset.args.getter
@@ -62,8 +57,14 @@ class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
         return "-".join(self.names)
 
     @property
-    @override
     def names(self) -> list[str]:
+        """
+        ConcatDataset에 포함된 Dataset들의 이름을 반환하는 속성입니다.
+
+        Returns:
+            Sequence[str]: ConcatDataset에 포함된 Dataset들의 이름을 나타내는 문자열 리스트입니다. 각 이름은 ConcatDataset에 포함된 Dataset의 name 속성에서 가져와야 합니다.
+        """
+        ...
         return [ds.name for ds in self._datasets]
 
     @override
@@ -120,7 +121,7 @@ class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
         return self.slice(start=start, stop=start + size)
 
     @override
-    def concat(self, other: ConcatDatasetProtocol | DatasetProtocol) -> ConcatDataset:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
         elif isinstance(other, ConcatDataset):
@@ -171,21 +172,31 @@ class ConcatDataset(Dataset, ConcatDatasetProtocol, Generic[T]):
                 for _class, ds in zip(classes, data.pop("datasets"))
             ]
         elif method == "from_pointer":
-            data["datasets"] = [Dataset.from_config(ds) for ds in data.pop("datasets")]
+            data["datasets"] = [Dataset.__setstate__(ds) for ds in data.pop("datasets")]
         else:
             raise ValueError(f"Invalid method for deserialization: {method}")
 
         return cls(**data)
 
     @override
-    def to_config(self: ConcatDataset) -> dict[str, Any]:
+    def __getstate__(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         args = self.args
-        args["datasets"] = [ds.to_pointer() for ds in self._datasets]
+        args["datasets"] = [ds.__getstate__() for ds in self._datasets]
         args["method"] = "from_pointer"
 
         return args
+
+    @classmethod
+    @override
+    def __setstate__(cls, data: Mapping[str, Any]) -> Self:
+        dataset = super().__setstate__(data)
+        if not isinstance(dataset, cls):
+            raise TypeError(
+                f"Invalid type for deserialization expected: {cls.__name__}, got: {type(dataset).__name__}"
+            )
+        return dataset
 
 
 __all__ = ["ConcatDataset"]

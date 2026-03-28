@@ -1,30 +1,43 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
 import numpy as np
 
-from typing import Protocol, Any, Generator, overload, runtime_checkable
+from typing import (
+    Protocol,
+    Any,
+    Generator,
+    overload,
+    runtime_checkable,
+    TypeVar,
+    Iterable,
+)
 from typing_extensions import Self
-from collections.abc import Sequence, Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping
 
 from dataset_loader.protocol.sample_protocol import SampleProtocol
 
-if TYPE_CHECKING:
-    from dataset_loader.protocol.concat_dataset_protocol import ConcatDatasetProtocol
+T = TypeVar("T", covariant=True)
+S = TypeVar("S", bound=SampleProtocol, covariant=True)
 
 
 @runtime_checkable
-class DatasetProtocol(Protocol):
+class DatasetProtocol(Protocol[T, S]):
     """
-    데이터셋을 나타내는 프로토콜입니다. 이 프로토콜은 데이터셋이 가져야 하는 속성과 메서드를 정의합니다.
+    이 프로토콜은 데이터셋이 가져야 하는 속성과 메서드를 정의합니다.
     데이터셋을 구현할 때 이 프로토콜을 사용하지 않습니다.
     구현할 때는 dataset_loader.base.dataset.Dataset 클래스를 상속하여 구현합니다.
     """
 
     @property
+    def dataset(self) -> T:
+        """데이터셋의 정보를 담고있는 객체를 반환하는 속성입니다."""
+        ...
+
+    @property
     def args(self) -> MutableMapping[str, Any]:
         """
         데이터셋 인스턴스를 생성하는 데 사용된 인자들을 반환하는 속성입니다.
+        __init__ 메서드에 바로 사용할 수 있습니다.
 
         Returns:
             MutableMapping[str, Any]: 데이터셋 인스턴스를 생성하는 데 사용된 인자들의 딕셔너리입니다. 이 딕셔너리는 데이터셋의 상태를 완전히 설명할 수 있어야 합니다. 예를 들어, 데이터셋이 특정 파일에서 로드된 경우, 파일 경로가 포함되어야 합니다. 데이터셋이 여러 데이터셋을 포함하는 경우, 각 데이터셋의 인자들도 포함되어야 합니다.
@@ -70,7 +83,7 @@ class DatasetProtocol(Protocol):
         """
         ...
 
-    def __iter__(self) -> Generator[SampleProtocol, None, None]:
+    def __iter__(self) -> Generator[S, None, None]:
         """
         데이터셋의 샘플을 반복할 수 있도록 하는 메서드입니다.
 
@@ -79,7 +92,7 @@ class DatasetProtocol(Protocol):
         """
         ...
 
-    def iter(self) -> Generator[SampleProtocol, None, None]:
+    def iter(self) -> Generator[S, None, None]:
         """
         데이터셋의 샘플을 반복할 수 있도록 하는 메서드입니다. __iter__ 메서드와 동일한 기능을 수행해야 합니다.
 
@@ -89,64 +102,74 @@ class DatasetProtocol(Protocol):
         ...
 
     @overload
-    def __getitem__(self, key: int) -> SampleProtocol: ...
+    def __getitem__(self, key: int) -> S: ...
     @overload
-    def __getitem__(self, key: slice | Sequence[int]) -> Self: ...
-    def __getitem__(self, key: int | slice | Sequence[int]) -> SampleProtocol | Self:
+    def __getitem__(self, key: slice | Iterable[int]) -> Self: ...
+    def __getitem__(self, key: int | slice | Iterable[int]) -> S | Self:
         """
-        데이터셋에서 샘플을 인덱싱할 수 있도록 하는 메서드입니다. 단일 인덱스인 경우 SampleProtocol 객체를 반환하고, 슬라이스나 정수 시퀀스인 경우 Self 객체를 반환해야 합니다.
+        key == int -> SampleProtocol \n
+        key == slice -> Self (using slice method) \n
+        key == Iterable[int] -> Self (using select method) \n
 
         Args:
-            key: 인덱스, 슬라이스 또는 정수 시퀀스입니다.
-
+            key (int | slice | Iterable[int]): 인덱스, 슬라이스 또는 정수 시퀀스입니다.
         Returns:
-            SampleProtocol | Self: 인덱싱된 샘플 또는 샘플 목록입니다.
+            SampleProtocol | Self: 인덱싱된 샘플 또는 데이터셋입니다.
         """
 
         ...
 
     @overload
-    def getitem(self, key: int) -> SampleProtocol: ...
+    def getitem(self, key: int) -> S: ...
     @overload
-    def getitem(self, key: slice | Sequence[int]) -> Self: ...
-    def getitem(self, key: int | slice | Sequence[int]) -> SampleProtocol | Self:
+    def getitem(self, key: slice | Iterable[int]) -> Self: ...
+    def getitem(self, key: int | slice | Iterable[int]) -> S | Self:
         """
-        데이터셋에서 샘플을 인덱싱할 수 있도록 하는 메서드입니다. __getitem__ 메서드와 동일한 기능을 수행해야 합니다.
+        key == int -> SampleProtocol \n
+        key == slice -> Self (using slice method) \n
+        key == Iterable[int] -> Self (using select method) \n
 
         Args:
-            key: 인덱스, 슬라이스 또는 정수 시퀀스입니다.
-
+            key (int | slice | Iterable[int]): 인덱스, 슬라이스 또는 정수 시퀀스입니다.
         Returns:
-            SampleProtocol | Self: 인덱싱된 샘플 또는 샘플 목록입니다.
+            SampleProtocol | Self: 인덱싱된 샘플 또는 데이터셋입니다.
+
+        Raises:
+            IndexError: 인덱스가 범위를 벗어난 경우
+            TypeError: key의 타입이 int, slice, Iterable[int]이 아닌 경우
         """
         ...
 
-    def select(self, indices: Sequence[int]) -> Self:
+    def select(self, indices: Iterable[int]) -> Self:
         """
         데이터셋에서 특정 인덱스에 해당하는 샘플을 선택하여 새로운 데이터셋을 반환하는 메서드입니다.
 
         Args:
-            indices: 선택할 샘플의 인덱스 시퀀스입니다.
-            use_cache: 선택된 샘플을 캐시에 저장할지 여부를 나타내는 정수입니다. 0인 경우 캐시를 사용하지 않고, 1인 경우 캐시를 사용합니다.
-
+            indices (Sequence[int]): 선택할 샘플의 인덱스 시퀀스입니다.
         Returns:
             Self: 선택된 샘플로 구성된 새로운 데이터셋입니다.
+        Raises:
+            IndexError: indices 중 하나라도 유효한 인덱스 범위를 벗어난 경우
         """
         ...
 
     def slice(
-        self, start: int | None = None, stop: int | None = None, step: int | None = None
+        self,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
     ) -> Self:
         """
         데이터셋에서 특정 범위에 해당하는 샘플을 선택하여 새로운 데이터셋을 반환하는 메서드입니다.
-
         Args:
-            start: 선택할 샘플의 시작 인덱스입니다. None인 경우 시작 인덱스는 0으로 간주됩니다.
-            stop: 선택할 샘플의 종료 인덱스입니다. None인 경우 종료 인덱스는 데이터셋의 길이로 간주됩니다.
-            step: 선택할 샘플의 간격입니다. None인 경우 간격은 1로 간주됩니다.
-
+            start (int | None): 선택할 샘플의 시작 인덱스입니다. None인 경우 시작 인덱스는 0으로 간주됩니다.
+            stop (int | None): 선택할 샘플의 종료 인덱스입니다. None인 경우 종료 인덱스는 데이터셋의 길이로 간주됩니다.
+            step (int | None): 선택할 샘플의 간격입니다. None인 경우 간격은 1로 간주됩니다.
         Returns:
             Self: 선택된 샘플로 구성된 새로운 데이터셋입니다.
+        Raises:
+            IndexError: start 또는 stop이 유효한 인덱스 범위를 벗어난 경우
+            ValueError: stop이 start보다 작은 경우
         """
         ...
 
@@ -162,64 +185,65 @@ class DatasetProtocol(Protocol):
         기본값으로 호출된 경우 복사본을 반환합니다.
 
         Args:
-            size: 선택할 샘플의 수입니다.
-            start: 선택할 샘플의 시작 인덱스입니다. 기본값은 0입니다.
-            rng: 무작위 샘플링에 사용할 난수 생성기입니다. None인 경우 무작위 샘플링이 수행되지 않습니다.
-
+            size (int): 선택할 샘플의 수입니다.
+            start (int): 선택할 샘플의 시작 인덱스입니다. 기본값은 0입니다.
+            rng (np.random.Generator | np.random.RandomState | None): 무작위 샘플링에 사용할 난수 생성기입니다. None인 경우 무작위 샘플링이 수행되지 않습니다.
         Returns:
             Self: 선택된 샘플로 구성된 새로운 데이터셋입니다.
+        Raises:
+            IndexError: start가 유효한 인덱스 범위를 벗어난 경우
         """
         ...
 
-    def __add__(
-        self, other: DatasetProtocol | ConcatDatasetProtocol
-    ) -> ConcatDatasetProtocol:
+    def __add__(self, other: DatasetProtocol[Any, Any]) -> DatasetProtocol[Any, Any]:
         """
         두 데이터셋을 연결하여 새로운 데이터셋을 반환하는 메서드입니다.
 
         Args:
-            other: 연결할 다른 데이터셋입니다.
-
+            other (DatasetProtocol[T]): 연결할 다른 데이터셋입니다.
         Returns:
-            Self: 연결된 데이터셋입니다.
+            DatasetProtocol[T]: 연결된 데이터셋입니다.
         """
         ...
 
-    def concat(
-        self, other: DatasetProtocol | ConcatDatasetProtocol
-    ) -> ConcatDatasetProtocol:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> DatasetProtocol[Any, Any]:
         """
         두 데이터셋을 연결하여 새로운 데이터셋을 반환하는 메서드입니다. __add__ 메서드와 동일한 기능을 수행해야 합니다.
 
         Args:
-            other: 연결할 다른 데이터셋입니다.
-
+            other (DatasetProtocol[T]): 연결할 다른 데이터셋입니다.
         Returns:
-            Self: 연결된 데이터셋입니다.
+            DatasetProtocol[T]: 연결된 데이터셋입니다.
+        Raises:
+            ValueError: self와 other의 task가 다른 경우
+            TypeError: other의 타입이 DatasetWrapper 또는 ConcatDataset이 아닌 경우
         """
         ...
 
-    def get(self, idx: int) -> SampleProtocol:
+    def get(self, idx: int) -> S:
         """
         데이터셋에서 특정 인덱스에 해당하는 샘플을 반환하는 메서드입니다.
 
         Args:
-            idx: 반환할 샘플의 인덱스입니다.
-
+            idx (int): 반환할 샘플의 인덱스입니다.
         Returns:
             SampleProtocol: 지정된 인덱스에 해당하는 샘플입니다.
+        Raises:
+            IndexError: idx가 유효한 인덱스 범위를 벗어난 경우
         """
         ...
 
     def clean(self) -> None:
         """
-        데이터셋이 메모리에서 정리되도록 하는 메서드입니다. 이 메서드를 호출한 후 데이터셋은 더 이상 사용할 수 없으며, is_cleaned 속성이 True로 설정되어야 합니다.
+        데이터셋이 메모리에서 정리되도록 하는 메서드입니다.
+        이 메서드를 호출한 후 데이터셋은 더 이상 사용할 수 없습니다.
         """
         ...
 
     def to_dict(self) -> MutableMapping[str, Any]:
         """
         데이터셋을 설명하는 딕셔너리를 반환하는 메서드입니다. 이 딕셔너리는 데이터셋의 상태를 완전히 설명할 수 있어야 하며, from_dict 클래스 메서드를 사용하여 데이터셋을 dict에서 객체로 복원할 수 있도록 필요한 모든 정보를 포함해야 합니다.
+        직렬화 가능하며, from_dict 메서드를 사용하여 복원할 수 있어야 합니다.
 
         Returns:
             MutableMapping[str, Any]: 데이터셋을 설명하는 딕셔너리입니다. 이 딕셔너리는 데이터셋의 상태를 완전히 설명할 수 있어야 하며, from_dict 클래스 메서드를 사용하여 데이터셋을 dict에서 객체로 복원할 수 있도록 필요한 모든 정보를 포함해야 합니다.
@@ -233,15 +257,15 @@ class DatasetProtocol(Protocol):
 
         Args:
             data: 데이터셋을 설명하는 딕셔너리입니다. 이 딕셔너리는 to_dict 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
-
         Returns:
             Self: 주어진 딕셔너리를 설명하는 데이터셋 객체입니다.
         """
         ...
 
-    def to_config(self) -> MutableMapping[str, Any]:
+    def __getstate__(self) -> MutableMapping[str, Any]:
         """
         데이터셋을 직렬화하기 위해 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리를 반환하는 메서드입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
+        __setstate__ 메서드를 통해서 복원할 수 있습니다.
 
         Returns:
             MutableMapping[str, Any]: 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 데이터셋을 직렬화할 때 사용됩니다.
@@ -249,19 +273,19 @@ class DatasetProtocol(Protocol):
         ...
 
     @classmethod
-    def from_config(cls, data: Mapping[str, Any]) -> DatasetProtocol:
+    def __setstate__(cls, data: Mapping[str, Any]) -> DatasetProtocol[T, S]:
         """
-        데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리에서 데이터셋 객체를 생성하는 클래스 메서드입니다. 이 메서드는 to_config 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
+        데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리에서 데이터셋 객체를 생성하는 클래스 메서드입니다. 이 메서드는 __getstate__ 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
 
         Args:
-            data: 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 to_config 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
+            data: 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 __getstate__ 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
 
         Returns:
-            DatasetProtocol: 주어진 딕셔너리를 설명하는 데이터셋 객체입니다.
+            DatasetProtocol[T, S]: 주어진 딕셔너리를 설명하는 데이터셋 객체입니다.
         """
         ...
 
-    def extract_import_data(self) -> MutableMapping[str, Any]:
+    def __get_import__(self) -> MutableMapping[str, Any]:
         """
         데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 반환하는 메서드입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
 
@@ -271,16 +295,16 @@ class DatasetProtocol(Protocol):
         ...
 
     @classmethod
-    def import_from_config(
+    def __set_import__(
         cls, data: Mapping[str, Any]
-    ) -> tuple[MutableMapping[str, Any], type[DatasetProtocol]]:
+    ) -> tuple[MutableMapping[str, Any], type[DatasetProtocol[T, S]]]:
         """
         데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 메서드입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
 
         Args:
             data: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 데이터셋을 직렬화할 때 사용됩니다.
         Returns:
-            tuple[MutableMapping[str, Any], type[DatasetProtocol]]: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리와 참조하는 클래스의 타입입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
+            tuple[MutableMapping[str, Any], type[DatasetProtocol[T, S]]]: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리와 참조하는 클래스의 타입입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
         """
         ...
 

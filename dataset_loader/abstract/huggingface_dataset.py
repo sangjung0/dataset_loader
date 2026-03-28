@@ -3,40 +3,45 @@ from __future__ import annotations
 import numpy as np
 
 from abc import ABC
-from typing import Any
+from typing import Any, Iterable
 from typing_extensions import override, Self
 from datasets import Dataset as DT
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 
 from dataset_loader.base import Dataset
 
 
-class HuggingfaceDataset(Dataset, ABC):
+class HuggingfaceDataset(Dataset[DT], ABC):
     def __init__(self, *, dataset: DT):
         super().__init__()
         self._dataset: DT | None = dataset
+
+    @property
+    @override
+    def dataset(self) -> DT:
+        if self.is_cleaned or self._dataset is None:
+            raise RuntimeError("Cannot get dataset of a cleaned dataset.")
+        return self._dataset
 
     @Dataset.args.getter
     @override
     def args(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot get args of a cleaned dataset")
-        return {**super().args, "dataset": self._dataset}
+        return {**super().args, "dataset": self.dataset}
 
     @Dataset.length.getter
     @override
     def length(self) -> int:
-        if self.is_cleaned:
+        if self.is_cleaned or self.dataset is None:
             raise RuntimeError("Cannot get length of a cleaned dataset")
-        assert self._dataset is not None
-        return len(self._dataset)
+        return len(self.dataset)
 
     @override
-    def select(self, indices: Sequence[int]) -> Self:
-        if self.is_cleaned:
+    def select(self, indices: Iterable[int]) -> Self:
+        if self.is_cleaned or self.dataset is None:
             raise RuntimeError("Cannot select from a cleaned dataset")
-        assert self._dataset is not None
-        dataset = self._dataset.select(indices)
+        dataset = self.dataset.select(indices)
         args = self.args
         args["dataset"] = dataset
         return type(self)(**args)
@@ -45,10 +50,9 @@ class HuggingfaceDataset(Dataset, ABC):
     def slice(
         self, start: int | None = None, stop: int | None = None, step: int | None = None
     ) -> Self:
-        if self.is_cleaned:
+        if self.is_cleaned or self.dataset is None:
             raise RuntimeError("Cannot slice a cleaned dataset")
-        assert self._dataset is not None
-        return self.select(range(len(self._dataset))[start:stop:step])
+        return self.select(range(len(self.dataset))[start:stop:step])
 
     @override
     def _sample(
@@ -58,7 +62,7 @@ class HuggingfaceDataset(Dataset, ABC):
         *,
         rng: np.random.Generator | np.random.RandomState | None = None,
     ) -> Self:
-        if self.is_cleaned:
+        if self.is_cleaned or self.dataset is None:
             raise RuntimeError("Cannot sample from a cleaned dataset")
         elif rng is None or size == len(self) - start:
             return self.slice(start, start + size)
@@ -76,11 +80,10 @@ class HuggingfaceDataset(Dataset, ABC):
 
     @override
     def to_dict(self: Self) -> dict[str, Any]:
-        if self.is_cleaned:
+        if self.is_cleaned or self.dataset is None:
             raise RuntimeError("Cannot serialize a cleaned dataset")
-        assert self._dataset is not None
         args = self.args
-        args["dataset"] = self._dataset.to_dict()
+        args["dataset"] = self.dataset.to_dict()
         return args
 
     @classmethod
@@ -89,6 +92,14 @@ class HuggingfaceDataset(Dataset, ABC):
         data = {**data}
         data["dataset"] = DT.from_dict(data["dataset"])
         return cls(**data)
+
+    @classmethod
+    @override
+    def __setstate__(cls, state: Mapping[str, Any]) -> Self:
+        dataset = super().__setstate__(state)
+        if isinstance(dataset, cls):
+            return dataset
+        raise TypeError(f"Dataset must be an instance of {cls.__name__}")
 
 
 __all__ = ["HuggingfaceDataset"]

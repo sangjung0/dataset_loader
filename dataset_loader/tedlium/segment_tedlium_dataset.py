@@ -51,15 +51,13 @@ class SegmentTedliumDataset(HuggingfaceDataset):
     def _cast_audio(self, sr: int) -> None:
         if self.is_cleaned:
             raise RuntimeError("Cannot change sample rate of a cleaned dataset")
-        assert self._dataset is not None
-        self._dataset = self._dataset.cast_column("audio", Audio(sampling_rate=sr))
+        self._dataset = self.dataset.cast_column("audio", Audio(sampling_rate=sr))
 
     @override
     def get(self, idx: int) -> Sample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
-        assert self._dataset is not None
-        data = self._dataset[idx]
+        data = self.dataset[idx]
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             samples = data["audio"].get_all_samples()

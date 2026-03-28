@@ -36,9 +36,9 @@ class TestESICv1(MixinDatasetTest, MixinASRDatasetTest):
 
     @pytest.fixture
     def asr_dataset(self, dataset: ESICv1Dataset) -> ASRDataset:
-        if not isinstance(dataset, ASRDatasetProtocol):
-            raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
-        return ASRDataset(dataset)
+        if isinstance(dataset, ASRDatasetProtocol):  # type: ignore
+            return ASRDataset(dataset=dataset)
+        raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
 
     @pytest.fixture
     def asr_samples(self, asr_dataset: ASRDataset) -> list[ASRSample]:

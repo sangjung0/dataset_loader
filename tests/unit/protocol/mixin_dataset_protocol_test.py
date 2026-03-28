@@ -5,11 +5,7 @@ import numpy as np
 
 from collections.abc import Sequence
 
-from dataset_loader.protocol import (
-    DatasetProtocol,
-    ConcatDatasetProtocol,
-    SampleProtocol,
-)
+from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
 
 class MixinDatasetProtocolTest:
@@ -98,7 +94,7 @@ class MixinDatasetProtocolTest:
 
     @staticmethod
     def assert__add__(
-        dataset: DatasetProtocol, ConcatDatasetType: type[ConcatDatasetProtocol]
+        dataset: DatasetProtocol, ConcatDatasetType: type[DatasetProtocol]
     ):
         l = len(dataset) // 3
         data_1 = dataset[:l]
@@ -137,9 +133,9 @@ class MixinDatasetProtocolTest:
         samples: Sequence[SampleProtocol],
         DatasetProtocolType: type[DatasetProtocol],
     ):
-        pointer = dataset.to_config()
-        restored = type(dataset).from_config(pointer)
-        restored_2 = DatasetProtocolType.from_config(pointer)
+        pointer = dataset.__getstate__()
+        restored = type(dataset).__setstate__(pointer)
+        restored_2 = DatasetProtocolType.__setstate__(pointer)
         assert isinstance(restored, type(dataset))
         assert [sample for sample in restored] == samples
         assert isinstance(restored_2, type(dataset))

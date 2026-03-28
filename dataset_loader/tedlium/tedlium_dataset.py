@@ -45,7 +45,7 @@ class TedliumDataset(ParquetDataset):
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
 
-        data = self._parquet.iloc[idx].to_dict()
+        data = self.dataset.iloc[idx].to_dict()
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             audio_path = data["audio_path"]

@@ -1,26 +1,20 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any, Mapping
 
-from typing import Sequence, overload
+from typing import overload, Iterable, Any, Mapping
 from typing_extensions import Self, override
 
-from dataset_loader.base import Sample
-from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
+from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
 from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
 from dataset_loader.wrapper.thread_loader_mixin import ThreadLoaderMixin
 
 from dataset_loader.wrapper.asr.asr_sample import ASRSample
-from dataset_loader.wrapper.asr.protocol import (
-    ASRDatasetProtocol,
-)
-
-if TYPE_CHECKING:
-    from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
+from dataset_loader.wrapper.asr.protocol import ASRDatasetProtocol
 
 
 class ASRDataset(
-    DatasetWrapper[ASRDatasetProtocol, ASRSample], ThreadLoaderMixin[ASRSample]
+    DatasetWrapper[ASRDatasetProtocol, ASRSample],
+    ThreadLoaderMixin[ASRSample],
 ):
     @property
     def sr(self) -> int:
@@ -33,25 +27,21 @@ class ASRDataset(
     @overload
     def getitem(self, key: int) -> ASRSample: ...
     @overload
-    def getitem(self, key: slice | Sequence[int]) -> Self: ...
+    def getitem(self, key: slice | Iterable[int]) -> Self: ...
     @override
-    def getitem(self, key: int | slice | Sequence[int]) -> ASRSample | Self:
+    def getitem(self, key: int | slice | Iterable[int]) -> ASRSample | Self:
         result = self.dataset[key]
-        if isinstance(result, Sample):
+        if isinstance(result, SampleProtocol):
             return ASRSample(sample=result)
-        assert isinstance(result, ASRDatasetProtocol)
         return self.__class__(dataset=result)
 
     @override
     def concat(
-        self, other: DatasetProtocol | ConcatDatasetProtocol
-    ) -> "ASRConcatDataset":
-        from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
-
-        if isinstance(other, ASRConcatDataset) or isinstance(other, ASRDataset):
-            return ASRConcatDataset(dataset=self.dataset + other.dataset)  # type: ignore
-        else:
-            raise TypeError("Invalid type for concatenation")
+        self, other: DatasetProtocol[ASRDatasetProtocol, ASRSample]
+    ) -> ASRDataset:
+        if isinstance(other, ASRDataset):
+            return ASRDataset(dataset=self.dataset + other.dataset)  # type: ignore
+        raise TypeError("Invalid type for concatenation")
 
     @override
     def get(self, idx: int) -> ASRSample:
@@ -64,9 +54,13 @@ class ASRDataset(
 
     @override
     @classmethod
-    def from_config(cls, data: Mapping[str, Any]) -> ASRDataset:
-        # TODO 이거는 문제가 있음. from_config가 ASRDataset을 보장하지 못함. 수정할 것.
-        return super().from_config(data)  # type: ignore
+    def __setstate__(cls, data: Mapping[str, Any]) -> ASRDataset:
+        dataset = super().__setstate__(data)
+        if isinstance(dataset, ASRDataset):
+            return dataset
+        raise TypeError(
+            f"Invalid type for deserialization, expected ASRDataset, got {type(dataset)} but got {type(dataset)}"
+        )
 
 
 __all__ = ["ASRDataset"]

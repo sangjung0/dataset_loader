@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import runtime_checkable, Protocol
+from typing import runtime_checkable, Protocol, Any
 
-from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
+from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
 
 @runtime_checkable
-class ASRDatasetProtocol(DatasetProtocol, Protocol):
+class ASRDatasetProtocol(DatasetProtocol[Any, SampleProtocol], Protocol):
     @property
     def sr(self) -> int: ...
 
@@ -14,13 +14,4 @@ class ASRDatasetProtocol(DatasetProtocol, Protocol):
     def sr(self, value: int): ...
 
 
-@runtime_checkable
-class ASRConcatDatasetProtocol(ConcatDatasetProtocol, Protocol):
-    @property
-    def sr(self) -> int: ...
-
-    @sr.setter
-    def sr(self, value: int): ...
-
-
-__all__ = ["ASRDatasetProtocol", "ASRConcatDatasetProtocol"]
+__all__ = ["ASRDatasetProtocol"]

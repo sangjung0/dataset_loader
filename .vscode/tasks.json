@@ -30,6 +30,28 @@
       "problemMatcher": []
     },
     {
+      "label": "python: ruff",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "ruff", "check", "."],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "python: mypy",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": ["-m", "mypy", "dataset_loader", "tests"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "shared", "clear": true }
+    },
+    {
+      "label": "python: static analysis (ruff + mypy)",
+      "dependsOn": ["python: ruff", "python: mypy"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
       "label": "pytest: all",
       "type": "shell",
       "command": "${workspaceFolder}/.venv/bin/python",

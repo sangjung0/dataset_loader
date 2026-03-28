@@ -23,7 +23,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
     @HuggingfaceDataset.args.getter
     @override
     def args(self) -> dict[str, Any]:
-        if self._is_cleaned:
+        if self.is_cleaned:
             raise RuntimeError("Cannot get args of a cleaned dataset")
         return {
             **super().args,
@@ -31,11 +31,11 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         }
 
     @property
-    def sr(self: ZerothKoreanDataset) -> int:
+    def sr(self) -> int:
         return self._sr
 
     @sr.setter
-    def sr(self: ZerothKoreanDataset, value: int) -> None:
+    def sr(self, value: int) -> None:
         if not (isinstance(value, int) and value > 0):
             raise ValueError("Sample rate must be a positive integer")
         self._sr = value
@@ -44,8 +44,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
     def get(self, idx: int) -> Sample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
-        assert self._dataset is not None
-        data = self._dataset[idx]
+        data = self.dataset[idx]
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:

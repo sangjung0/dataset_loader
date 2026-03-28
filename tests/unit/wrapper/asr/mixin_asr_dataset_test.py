@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataset_loader.wrapper.asr import ASRDataset, ASRSample, ASRConcatDataset
+from dataset_loader.wrapper.asr import ASRDataset, ASRSample
 
 from tests.unit.protocol import MixinDatasetProtocolTest
 
@@ -67,7 +67,7 @@ class MixinASRDatasetTest(MixinDatasetProtocolTest):
         type(self).assert_get(asr_dataset)
 
     def test_asr__add__(self, asr_dataset: ASRDataset):
-        type(self).assert__add__(asr_dataset, ASRConcatDataset)
+        type(self).assert__add__(asr_dataset, ASRDataset)
 
     def test_asr_to_dict_and_from_dict(
         self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]

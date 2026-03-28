@@ -23,6 +23,7 @@ class LibriSpeechDataset(ParquetDataset):
         self._sr: int = sr
 
     @ParquetDataset.args.getter
+    @override
     def args(self: LibriSpeechDataset) -> dict[str, Any]:
         return {**super().args, "sr": self._sr}
 
@@ -41,7 +42,7 @@ class LibriSpeechDataset(ParquetDataset):
     def get(self: LibriSpeechDataset, idx: int) -> Sample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset.")
-        data = self._parquet.iloc[idx].to_dict()
+        data = self.dataset.iloc[idx].to_dict()
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             audio_path = data["audio_path"]
