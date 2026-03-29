@@ -16,6 +16,10 @@ dependencies = [
     "torchcodec>=0.8.0",
     "pathvalidate>=3.3.1",
     "cachetools>=7.0.1",
+    "ruff>=0.15.8",
+    "requests>=2.32.5",
+    "httpx>=0.28.1",
+    "opencv-python-headless>=4.13.0.92",
 ]
 
 [dependency-groups]
@@ -23,6 +27,7 @@ dev = [
     "ipykernel>=7.1.0",
     "ipywidgets>=8.1.7",
     "jupyterlab>=4.4.10",
+    "matplotlib>=3.10.8",
     "notebook>=7.4.7",
 ]
 test = [

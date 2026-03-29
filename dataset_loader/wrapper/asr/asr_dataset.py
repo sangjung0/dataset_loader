@@ -49,8 +49,7 @@ class ASRDataset(
         return ASRSample(sample=sample)
 
     def _loader(self, sample: ASRSample) -> ASRSample:
-        _ = sample.audio  # Force loading audio
-        return sample
+        return sample.loaded_audio_sample()
 
     @override
     @classmethod

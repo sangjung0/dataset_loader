@@ -57,7 +57,6 @@ class ESICv1(ParquetLoader):
     def download_url(self) -> str:
         return self._download_url
 
-    @override
     def download(self, *, url: str | None = None, verbose: bool = True) -> Path:
         import shutil
 
