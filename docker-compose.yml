@@ -1,8 +1,11 @@
+# Author: SangJeong Kim
+# Last Modified: 2026-03-31
+
 name: ${CONTAINER_NAME}
 services:
   service:
     user: "${CONTAINER_UID}:${CONTAINER_UID}"
-    shm_size: 16gb
+    shm_size: ${CONTAINER_SHM_SIZE}
     container_name: ${CONTAINER_NAME}_service
     build:
       context: .
@@ -34,7 +37,7 @@ services:
             - driver: nvidia
               device_ids: ["${CONTAINER_GPU_ID}"]
               capabilities: [gpu]
-    command: ["tail", "-f", "/dev/null"]
+    command: sleep infinity
 
 volumes:
   shortcuts:

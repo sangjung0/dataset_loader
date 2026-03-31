@@ -96,10 +96,10 @@ class MixinDatasetProtocolTest:
     def assert__add__(
         dataset: DatasetProtocol, ConcatDatasetType: type[DatasetProtocol]
     ):
-        l = len(dataset) // 3
-        data_1 = dataset[:l]
-        data_2 = dataset[l : 2 * l]
-        data_3 = dataset[2 * l :]
+        length = len(dataset) // 3
+        data_1 = dataset[:length]
+        data_2 = dataset[length : 2 * length]
+        data_3 = dataset[2 * length :]
 
         # other: DatasetProtocol
         concat_dataset = data_1 + data_2

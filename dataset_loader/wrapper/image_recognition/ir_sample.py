@@ -13,7 +13,7 @@ from dataset_loader.base.sample import Sample
 
 @dataclass(frozen=True)
 class IRSample(SampleProtocol):
-    sample: SampleProtocol = field(compare=False, hash=True, repr=False)
+    sample: SampleProtocol = field(compare=False, hash=True, repr=True)
 
     @property
     def id(self) -> str:
@@ -24,7 +24,7 @@ class IRSample(SampleProtocol):
         return self.sample.data
 
     @property
-    def raw(self) -> npt.NDArray[np.float32]:
+    def raw(self) -> npt.NDArray[np.uint8]:
         if "load_raw" not in self.sample.data:
             raise AttributeError("Raw image data is not available in this sample")
         return self.sample.data["load_raw"]()
@@ -52,8 +52,8 @@ class IRSample(SampleProtocol):
     def create(
         id: str,
         *,
-        load_raw: Callable[[], npt.NDArray[np.float32]] | None = None,
-        raw: npt.NDArray[np.float32] | None = None,
+        load_raw: Callable[[], npt.NDArray[np.uint8]] | None = None,
+        raw: npt.NDArray[np.uint8] | None = None,
         label: str | dict[str, Any] | list | None = None,
         data: Mapping[str, Any] | None = None,
     ) -> IRSample:
@@ -74,6 +74,12 @@ class IRSample(SampleProtocol):
 
         sample = Sample(id=id, data=data)
         return IRSample(sample=sample)
+
+    def __str__(self) -> str:
+        return f"IRSample(id={self.id}, label={self.label})"
+
+    def __repr__(self) -> str:
+        return f"IRSample(id={self.id}, label={self.label})"
 
 
 __all__ = ["IRSample"]

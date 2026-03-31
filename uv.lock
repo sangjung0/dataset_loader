@@ -916,6 +916,7 @@ dev = [
 test = [
     { name = "pytest" },
     { name = "pytest-dotenv" },
+    { name = "ruff" },
 ]
 
 [package.metadata]
@@ -948,6 +949,7 @@ dev = [
 test = [
     { name = "pytest", specifier = ">=8.4.2" },
     { name = "pytest-dotenv", specifier = ">=0.5.2" },
+    { name = "ruff", specifier = ">=0.15.8" },
 ]
 
 [[package]]
@@ -4297,6 +4299,11 @@ dev = [
     { name = "ipywidgets", specifier = ">=8.1.7" },
     { name = "jupyterlab", specifier = ">=4.4.10" },
     { name = "notebook", specifier = ">=7.4.7" },
+]
+test = [
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-dotenv", specifier = ">=0.5.2" },
+    { name = "ruff", specifier = ">=0.15.8" },
 ]
 
 [[package]]

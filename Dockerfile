@@ -1,3 +1,6 @@
+# Author: SangJeong Kim
+# Last Modified: 2026-03-30
+
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,5 +38,3 @@ USER ${CONTAINER_USER}
 # INSTALL UV
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="${CONTAINER_HOME}/.uv/bin:$PATH"
-
-
