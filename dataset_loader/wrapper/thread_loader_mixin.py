@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Generator
+from typing import Generic, TypeVar
 from collections import deque
+from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor, Future
 
 T = TypeVar("T")

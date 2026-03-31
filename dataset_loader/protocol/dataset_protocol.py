@@ -2,17 +2,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import (
-    Protocol,
-    Any,
-    Generator,
-    overload,
-    runtime_checkable,
-    TypeVar,
-    Iterable,
-)
+from typing import Protocol, Any, overload, runtime_checkable, TypeVar
 from typing_extensions import Self
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Iterable, Generator
 
 from dataset_loader.protocol.sample_protocol import SampleProtocol
 

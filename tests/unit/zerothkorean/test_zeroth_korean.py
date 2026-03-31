@@ -39,7 +39,7 @@ class TestZerothKorean(MixinASRDatasetTest, MixinDatasetTest):
 
     @pytest.fixture
     def asr_dataset(self, dataset: ZerothKoreanDataset) -> ASRDataset:
-        if isinstance(dataset, ASRDatasetProtocol):  # type: ignore
+        if isinstance(dataset, ASRDatasetProtocol):
             return ASRDataset(dataset=dataset)
         raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
 

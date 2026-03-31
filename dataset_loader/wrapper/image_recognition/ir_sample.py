@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any, Callable
+from typing import Any
 from dataclasses import dataclass, field
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Callable
 
 from dataset_loader.protocol import SampleProtocol
 from dataset_loader.base.sample import Sample
@@ -20,20 +20,22 @@ class IRSample(SampleProtocol):
         return self.sample.id
 
     @property
-    def data(self) -> MutableMapping[str, Any]:
+    def data(self) -> Mapping[str, Any]:
         return self.sample.data
 
     @property
     def raw(self) -> npt.NDArray[np.uint8]:
         if "load_raw" not in self.sample.data:
             raise AttributeError("Raw image data is not available in this sample")
-        return self.sample.data["load_raw"]()
+        audio: npt.NDArray[np.uint8] = self.sample.data["load_raw"]()
+        return audio
 
     @property
-    def label(self) -> str | dict[str, Any] | list:
+    def label(self) -> str | dict[str, Any] | list[Any]:
         if "label" not in self.sample.data:
             raise AttributeError("Label is not available in this sample")
-        return self.sample.data["label"]
+        label: str | dict[str, Any] | list[Any] = self.sample.data["label"]
+        return label
 
     def loaded_ir_sample(self) -> IRSample:
         data = {**self.data}
@@ -54,7 +56,7 @@ class IRSample(SampleProtocol):
         *,
         load_raw: Callable[[], npt.NDArray[np.uint8]] | None = None,
         raw: npt.NDArray[np.uint8] | None = None,
-        label: str | dict[str, Any] | list | None = None,
+        label: str | dict[str, Any] | list[Any] | None = None,
         data: Mapping[str, Any] | None = None,
     ) -> IRSample:
         if data is None:

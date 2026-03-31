@@ -40,11 +40,11 @@ class DatasetLoader(ABC):
         return self._path
 
     @abstractmethod
-    def download(self, *args, **kwargs) -> Any:
+    def download(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
 
     @abstractmethod
-    def load(self, *args, **kwargs) -> Any:
+    def load(self, *args: Any, **kwargs: Any) -> Any:
         raise NotImplementedError
 
 

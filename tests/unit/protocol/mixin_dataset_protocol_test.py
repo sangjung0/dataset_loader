@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 import numpy as np
 
+from typing import Any
 from collections.abc import Sequence
 
 from dataset_loader.protocol import DatasetProtocol, SampleProtocol
@@ -14,16 +15,22 @@ class MixinDatasetProtocolTest:
     """
 
     @staticmethod
-    def assert__len__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
+    def assert__len__(
+        dataset: DatasetProtocol[Any, Any], samples: Sequence[SampleProtocol]
+    ) -> None:
         assert len(dataset) == len(samples)
 
     @staticmethod
-    def assert__iter__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
+    def assert__iter__(
+        dataset: DatasetProtocol[Any, Any], samples: Sequence[SampleProtocol]
+    ) -> None:
         for i, sample in enumerate(dataset):
             assert sample == samples[i]
 
     @staticmethod
-    def assert__getitem__(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
+    def assert__getitem__(
+        dataset: DatasetProtocol[Any, Any], samples: Sequence[SampleProtocol]
+    ) -> None:
         # int
         for i in range(len(samples)):
             assert dataset[i] == samples[i]
@@ -43,7 +50,7 @@ class MixinDatasetProtocolTest:
         assert indexed_dataset_list == [samples[i] for i in indices]
 
     @staticmethod
-    def assert_select(dataset: DatasetProtocol):
+    def assert_select(dataset: DatasetProtocol[Any, Any]) -> None:
         indices = [i for i in range(0, len(dataset), 5)]
         selected_dataset = dataset.select(indices)
         validate_dataset = dataset[indices]
@@ -53,7 +60,7 @@ class MixinDatasetProtocolTest:
         ]
 
     @staticmethod
-    def assert_slice(dataset: DatasetProtocol):
+    def assert_slice(dataset: DatasetProtocol[Any, Any]) -> None:
         sl = slice(len(dataset) // 3, len(dataset) // 2, 2)
         sliced_dataset = dataset.slice(sl.start, sl.stop, sl.step)
         validate_dataset = dataset[sl]
@@ -63,7 +70,9 @@ class MixinDatasetProtocolTest:
         ]
 
     @staticmethod
-    def assert_sample(dataset: DatasetProtocol, samples: Sequence[SampleProtocol]):
+    def assert_sample(
+        dataset: DatasetProtocol[Any, Any], samples: Sequence[SampleProtocol]
+    ) -> None:
         # without rng
         size = len(dataset) // 5
         start = np.random.randint(0, len(dataset) - size)
@@ -85,7 +94,7 @@ class MixinDatasetProtocolTest:
         assert len(sampled_dataset) == size
 
     @staticmethod
-    def assert_get(dataset: DatasetProtocol):
+    def assert_get(dataset: DatasetProtocol[Any, Any]) -> None:
         for i in range(len(dataset)):
             assert dataset.get(i) == dataset[i]
         with pytest.raises(IndexError):
@@ -94,8 +103,9 @@ class MixinDatasetProtocolTest:
 
     @staticmethod
     def assert__add__(
-        dataset: DatasetProtocol, ConcatDatasetType: type[DatasetProtocol]
-    ):
+        dataset: DatasetProtocol[Any, Any],
+        ConcatDatasetType: type[DatasetProtocol[Any, Any]],
+    ) -> None:
         length = len(dataset) // 3
         data_1 = dataset[:length]
         data_2 = dataset[length : 2 * length]
@@ -120,8 +130,8 @@ class MixinDatasetProtocolTest:
 
     @staticmethod
     def assert_to_dict_and_from_dict(
-        dataset: DatasetProtocol, samples: Sequence[SampleProtocol]
-    ):
+        dataset: DatasetProtocol[Any, Any], samples: Sequence[SampleProtocol]
+    ) -> None:
         d = dataset.to_dict()
         restored = type(dataset).from_dict(d)
         assert isinstance(restored, type(dataset))
@@ -129,10 +139,10 @@ class MixinDatasetProtocolTest:
 
     @staticmethod
     def assert_to_config_and_from_config(
-        dataset: DatasetProtocol,
+        dataset: DatasetProtocol[Any, Any],
         samples: Sequence[SampleProtocol],
-        DatasetProtocolType: type[DatasetProtocol],
-    ):
+        DatasetProtocolType: type[DatasetProtocol[Any, Any]],
+    ) -> None:
         pointer = dataset.__getstate__()
         restored = type(dataset).__setstate__(pointer)
         restored_2 = DatasetProtocolType.__setstate__(pointer)
@@ -142,7 +152,7 @@ class MixinDatasetProtocolTest:
         assert [sample for sample in restored_2] == samples
 
     @staticmethod
-    def assert_sample_identity(dataset: DatasetProtocol):
+    def assert_sample_identity(dataset: DatasetProtocol[Any, Any]) -> None:
         assert len(dataset) == len(set(sample.id for sample in dataset))
 
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import overload, Iterable, Any, Mapping
+from typing import overload, Any
 from typing_extensions import Self, override
+from collections.abc import Iterable, Mapping
 
 from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
@@ -21,7 +22,7 @@ class ASRDataset(
         return self.dataset.sr
 
     @sr.setter
-    def sr(self, value: int):
+    def sr(self, value: int) -> None:
         self.dataset.sr = value
 
     @overload

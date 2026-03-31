@@ -26,7 +26,7 @@ class KSPonSpeechDataset(HuggingfaceDataset):
         self._sr = sr
         self._cast_audio(sr)
 
-    @HuggingfaceDataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         if self.is_cleaned:
@@ -62,7 +62,7 @@ class KSPonSpeechDataset(HuggingfaceDataset):
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:
-            return (
+            audio: npt.NDArray[np.float32] = (
                 data["audio"]
                 .get_all_samples()
                 .data.mean(dim=0)
@@ -71,6 +71,7 @@ class KSPonSpeechDataset(HuggingfaceDataset):
                 .numpy()
                 .astype(np.float32)
             )
+            return audio
 
         result = {
             "load_audio_func": load_audio,

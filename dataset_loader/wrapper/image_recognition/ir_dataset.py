@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from typing import overload, Iterable, Any, Mapping
+from typing import overload, Any
 from typing_extensions import Self, override
+from collections.abc import Mapping, Iterable
 
 from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
@@ -12,7 +13,7 @@ from dataset_loader.wrapper.image_recognition.ir_sample import IRSample
 
 
 class IRDataset(
-    DatasetWrapper[DatasetProtocol, IRSample],
+    DatasetWrapper[DatasetProtocol[Any, Any], IRSample],
     ThreadLoaderMixin[IRSample],
 ):
     @overload
@@ -27,9 +28,11 @@ class IRDataset(
         return self.__class__(dataset=result)
 
     @override
-    def concat(self, other: DatasetProtocol[DatasetProtocol, IRSample]) -> IRDataset:
+    def concat(
+        self, other: DatasetProtocol[DatasetProtocol[Any, Any], IRSample]
+    ) -> IRDataset:
         if isinstance(other, IRDataset):
-            return IRDataset(dataset=self.dataset + other.dataset)  # type: ignore
+            return IRDataset(dataset=self.dataset + other.dataset)
         raise TypeError("Invalid type for concatenation")
 
     @override

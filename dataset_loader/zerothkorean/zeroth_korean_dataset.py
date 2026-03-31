@@ -20,7 +20,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         self._sr = sr
         self._original_sr = sr
 
-    @HuggingfaceDataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         if self.is_cleaned:

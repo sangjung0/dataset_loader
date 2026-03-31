@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 
 from abc import ABC, abstractmethod
-from typing import Generator, Any, overload, TypeVar, Iterable
+from typing import Any, overload, TypeVar
 from typing_extensions import Self, override
-from collections.abc import Mapping
+from collections.abc import Mapping, Generator, Iterable
 
 from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
@@ -155,7 +155,7 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     @override
     def __setstate__(cls, data: Mapping[str, Any]) -> DatasetWrapper[T, S]:
         if all(k in data for k in ("module", "qualname", "type")):
-            data, wrapper_cls = cls.__set_import__(data)
+            state, wrapper_cls = cls.__set_import__(data)
         else:
             raise ValueError("Invalid pointer data: missing module, qualname, or type")
 
@@ -166,9 +166,9 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
 
         from sjpy.reference import import_from
 
-        dataset_cls = import_from(data["dataset"])
-        data["dataset"] = dataset_cls.__setstate__(data["dataset"])
-        return wrapper_cls(**data)
+        dataset_cls = import_from(state["dataset"])
+        state["dataset"] = dataset_cls.__setstate__(state["dataset"])
+        return wrapper_cls(**state)
 
     def __get_import__(self) -> dict[str, Any]:
         if self.is_cleaned:
@@ -186,7 +186,7 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     ) -> tuple[dict[str, Any], type[DatasetWrapper[T, S]]]:
         from sjpy.reference import import_from
 
-        _class = import_from(data)
+        _class: type[DatasetWrapper[T, S]] = import_from(data)
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
@@ -197,9 +197,10 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
                 f"Type mismatch: expected {_class.__name__}, got {data['type']}"
             )
 
-        _class: type[DatasetWrapper[T, S]]
-        d = {k: v for k, v in data.items() if k not in ("module", "qualname", "type")}
-        return d, _class
+        state = {
+            k: v for k, v in data.items() if k not in ("module", "qualname", "type")
+        }
+        return state, _class
 
 
 __all__ = ["DatasetWrapper"]

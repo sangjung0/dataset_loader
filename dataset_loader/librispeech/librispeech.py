@@ -26,7 +26,7 @@ class LibriSpeech(ParquetLoader):
     """
 
     def __init__(
-        self: LibriSpeech,
+        self,
         *,
         dir_name: str | None = None,
         path: str | Path | None = None,
@@ -45,8 +45,8 @@ class LibriSpeech(ParquetLoader):
         return self._download_urls.copy()
 
     @overload
-    def download(
-        self: LibriSpeech,
+    def download( # type: ignore[overload-overlap]
+        self,
         *,
         name: str | LibriSpeechSet,
         url: Mapping[str, str] | str | None = None,
@@ -54,7 +54,7 @@ class LibriSpeech(ParquetLoader):
     ) -> Path: ...
     @overload
     def download(
-        self: LibriSpeech,
+        self,
         *,
         name: list[str | LibriSpeechSet] | Literal["all"] = "all",
         url: Mapping[str, str] | None = None,
@@ -62,7 +62,7 @@ class LibriSpeech(ParquetLoader):
     ) -> list[Path]: ...
     @override
     def download(
-        self: LibriSpeech,
+        self,
         *,
         name: list[str | LibriSpeechSet] | str | Literal["all"] = "all",
         url: Mapping[str, str] | str | None = None,
@@ -95,9 +95,7 @@ class LibriSpeech(ParquetLoader):
             url = url[name]
         return self._download(name=name, url=url, verbose=verbose)
 
-    def _download(
-        self: LibriSpeech, *, name: str, url: str, verbose: bool = True
-    ) -> Path:
+    def _download(self, *, name: str, url: str, verbose: bool = True) -> Path:
         from sjpy.download import download
         from sjpy.archive.tar import extract_tar
         from sjpy.file.algorithm import move_dir_contents
@@ -116,20 +114,13 @@ class LibriSpeech(ParquetLoader):
         return target_path
 
     @override
-    def load(
-        self: LibriSpeech, *, name: str, prepare_dir: str = ".prepare"
-    ) -> pd.DataFrame:
+    def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
         data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)
         return data
 
     @override
-    def _parse_files(
-        self: LibriSpeech,
-        *,
-        name: str,
-        verbose: bool = False,
-    ) -> list[dict[str, str]]:
+    def _parse_files(self, *, name: str, verbose: bool = False) -> list[dict[str, str]]:
         target = self.path / name
         if not target.exists():
             raise FileNotFoundError(f"LibriSpeech dataset not found at: {target}")
@@ -157,43 +148,43 @@ class LibriSpeech(ParquetLoader):
         return data
 
     def train_clean_100(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-clean-100", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def train_clean_360(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-clean-360", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def train_other_500(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="train-other-500", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def dev_clean(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="dev-clean", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def dev_other(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="dev-other", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def test_clean(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="test-clean", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)
 
     def test_other(
-        self: LibriSpeech, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
+        self, sr: int = DEFAULT_SAMPLE_RATE, prepare_dir: str = ".prepare"
     ) -> LibriSpeechDataset:
         data = self.load(name="test-other", prepare_dir=prepare_dir)
         return LibriSpeechDataset(parquet=data, sr=sr)

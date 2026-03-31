@@ -9,25 +9,25 @@ from collections.abc import Mapping
 from dataset_loader.base import Dataset, Sample
 
 
-class DummyDataset(Dataset):
+class DummyDataset(Dataset["DummyDataset"]):
     def __init__(self: DummyDataset, *, samples: list[Sample]):
         super().__init__()
         self._samples = list(samples)
 
-    @Dataset.args.getter
+    @property
     @override
     def dataset(self: DummyDataset) -> DummyDataset:
         return self
 
-    @Dataset.args.getter
+    @property
     @override
-    def args(self: DummyDataset) -> dict:
+    def args(self: DummyDataset) -> dict[str, Any]:
         return {
             **super().args,
             "samples": [s.to_dict() for s in self._samples],
         }
 
-    @Dataset.length.getter
+    @property
     @override
     def length(self: DummyDataset) -> int:
         if self.is_cleaned:
@@ -65,7 +65,7 @@ class DummyDataset(Dataset):
             return self.slice(start, start + size)
         else:
             indices = range(len(self))[start:]
-            indices = rng.choice(indices, size=size, replace=False)
+            indices = rng.choice(indices, size=size, replace=False)  # type: ignore[assignment]
             return self.select(list(indices))
 
     @override
