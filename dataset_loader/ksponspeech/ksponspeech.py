@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Sequence
+from typing import Any
 from typing_extensions import override
+from collections.abc import Sequence
 from datasets import Dataset, IterableDatasetDict
 
 from dataset_loader.abstract import HuggingfaceLoader
@@ -47,33 +48,33 @@ class KSPonSpeech(HuggingfaceLoader):
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        **kwargs,
+        **kwargs: Any,
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def valid(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        **kwargs,
+        **kwargs: Any,
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="valid", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
-        **kwargs,
+        **kwargs: Any,
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
 

@@ -8,7 +8,7 @@ from dataset_loader.base import Sample
 
 class TestSample:
     @pytest.fixture
-    def original(self):
+    def original(self) -> Sample:
         return Sample(
             id="test_id",
             data={
@@ -18,7 +18,7 @@ class TestSample:
         )
 
     @pytest.fixture
-    def original_copy(self):
+    def original_copy(self) -> Sample:
         return Sample(
             id="test_id",
             data={
@@ -28,17 +28,19 @@ class TestSample:
         )
 
     @pytest.fixture
-    def other(self):
+    def other(self) -> Sample:
         return Sample(
             id="different_id",
             data={"load_audio": np.array([0.0, 1.0]), "Y": {"asr": "hi"}},
         )
 
-    def test_equality(self, original: Sample, original_copy: Sample, other: Sample):
+    def test_equality(
+        self, original: Sample, original_copy: Sample, other: Sample
+    ) -> None:
         assert original == original_copy
         assert original != other
 
-    def test_hash(self, original: Sample, original_copy: Sample, other: Sample):
+    def test_hash(self, original: Sample, original_copy: Sample, other: Sample) -> None:
         assert hash(original) == hash(original_copy)
         assert hash(original) != hash(other)
 

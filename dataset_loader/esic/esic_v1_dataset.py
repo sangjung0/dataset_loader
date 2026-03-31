@@ -21,7 +21,7 @@ class ESICv1Dataset(ParquetDataset):
         super().__init__(parquet=parquet)
         self._sr: int = sr
 
-    @ParquetDataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         return {**super().args, "sr": self._sr}
@@ -42,15 +42,15 @@ class ESICv1Dataset(ParquetDataset):
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset.")
 
-        data = self.dataset.iloc[idx].to_dict()
+        data: dict[str, Any] = self.dataset.iloc[idx].to_dict() # type: ignore[assignment]
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             mp4_path = data["mp4_path"]
             wav, _ = load_from_mp4_file(mp4_path, self._sr)
             return wav
 
-        _id = data.pop("id")
-        result = {
+        _id: str = data.pop("id")
+        result: dict[str, Any] = {
             "load_audio_func": load_audio_func,
             "ref": re.sub(r"\s+", " ", data[VERBATIM]).strip(),
             **data,

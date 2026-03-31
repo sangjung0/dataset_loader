@@ -41,17 +41,17 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
     def dataset(self) -> list[Dataset[Any]]:
         return self._datasets.copy()
 
-    @Dataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         return {**super().args, "datasets": self._datasets}
 
-    @Dataset.length.getter
+    @property
     @override
     def length(self) -> int:
         return sum(len(ds) for ds in self._datasets)
 
-    @Dataset.name.getter
+    @property
     @override
     def name(self) -> str:
         return "-".join(self.names)

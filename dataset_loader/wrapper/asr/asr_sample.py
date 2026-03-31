@@ -3,9 +3,9 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any, Callable
+from typing import Any
 from dataclasses import dataclass, field
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Mapping, MutableMapping, Callable
 
 from dataset_loader.protocol import SampleProtocol
 from dataset_loader.base.sample import Sample
@@ -20,26 +20,29 @@ class ASRSample(SampleProtocol):
         return self.sample.id
 
     @property
-    def data(self) -> MutableMapping[str, Any]:
+    def data(self) -> Mapping[str, Any]:
         return self.sample.data
 
     @property
     def audio(self) -> npt.NDArray[np.float32]:
         if "load_audio_func" not in self.sample.data:
             raise AttributeError("Audio data is not available in this sample")
-        return self.sample.data["load_audio_func"]()
+        audio: npt.NDArray[np.float32] = self.sample.data["load_audio_func"]()
+        return audio
 
     @property
     def ref(self) -> str:
         if "ref" not in self.sample.data:
             raise AttributeError("ASR label is not available in this sample")
-        return self.sample.data["ref"]
+        ref: str = self.sample.data["ref"]
+        return ref
 
     @property
     def diarization(self) -> list[dict[str, Any]]:
         if "diarization" not in self.sample.data:
             raise AttributeError("Diarization label is not available in this sample")
-        return self.sample.data["diarization"]
+        diarization: list[dict[str, Any]] = self.sample.data["diarization"]
+        return diarization
 
     def loaded_audio_sample(self) -> ASRSample:
         data = {**self.data}

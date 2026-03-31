@@ -18,7 +18,7 @@ class SampleProtocol(Protocol):
         ...
 
     @property
-    def data(self) -> MutableMapping[str, Any]:
+    def data(self) -> Mapping[str, Any]:
         """샘플의 실제 데이터가 포함된 딕셔너리를 반환하는 속성입니다."""
         ...
 

@@ -22,7 +22,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         self._sr = sr
         self._cast_audio(sr)
 
-    @HuggingfaceDataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         if self.is_cleaned:
@@ -61,7 +61,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             samples = data["audio"].get_all_samples()
-            wav = samples.data.mean(dim=0).detach().cpu().numpy()
+            wav: npt.NDArray[Any] = samples.data.mean(dim=0).detach().cpu().numpy()
             return wav.astype(np.float32)
 
         text = data["text"].strip()

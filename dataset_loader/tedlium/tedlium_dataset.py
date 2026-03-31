@@ -6,8 +6,9 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from typing import Sequence
+from typing import Any
 from typing_extensions import override
+from collections.abc import Sequence
 
 from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
@@ -25,8 +26,9 @@ class TedliumDataset(ParquetDataset):
         self._sr = sr
         self._ignore_set = list(ignore_set)
 
-    @ParquetDataset.args.getter
-    def args(self):
+    @property
+    @override
+    def args(self) -> dict[str, Any]:
         return {**super().args, "ignore_set": self._ignore_set, "sr": self._sr}
 
     @property
@@ -45,21 +47,21 @@ class TedliumDataset(ParquetDataset):
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
 
-        data = self.dataset.iloc[idx].to_dict()
+        data: dict[str, Any] = self.dataset.iloc[idx].to_dict()  # type: ignore[assignment]
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             audio_path = data["audio_path"]
             wav, _ = librosa.load(audio_path, sr=self._sr)
             return wav.astype(np.float32)
 
-        diarization = data.pop("stm")
-        ref = data["text"]
+        diarization: str = data.pop("stm")
+        ref: str = data["text"]
         for ignore in self._ignore_set:
             ref = re.sub(rf"{re.escape(ignore)}\s*", "", ref)
         ref = ref.strip()
-        _id = data.pop("id")
+        _id: str = data.pop("id")
 
-        result = {
+        result: dict[str, Any] = {
             "load_audio_func": load_audio_func,
             "ref": ref,
             "diarization": diarization,

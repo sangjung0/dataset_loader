@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 
 from abc import ABC
-from typing import Any, Iterable
+from typing import Any
 from typing_extensions import override, Self
-from collections.abc import Mapping
+from collections.abc import Mapping, Iterable
 
 from dataset_loader.base import Dataset
 
@@ -23,12 +23,12 @@ class ParquetDataset(Dataset[pd.DataFrame], ABC):
             raise RuntimeError("Cannot get dataset of a cleaned dataset.")
         return self._parquet
 
-    @Dataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         return {**super().args, "parquet": self.dataset}
 
-    @Dataset.length.getter
+    @property
     @override
     def length(self) -> int:
         if self.is_cleaned:
@@ -69,7 +69,7 @@ class ParquetDataset(Dataset[pd.DataFrame], ABC):
             return self.slice(start, start + size)
         else:
             indices = range(len(self))[start:]
-            indices = rng.choice(indices, size=size, replace=False)
+            indices = rng.choice(indices, size=size, replace=False)  # type: ignore[assignment]
             return self.select(indices)
 
     @override

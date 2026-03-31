@@ -22,7 +22,7 @@ class LibriSpeechDataset(ParquetDataset):
         super().__init__(parquet=parquet)
         self._sr: int = sr
 
-    @ParquetDataset.args.getter
+    @property
     @override
     def args(self: LibriSpeechDataset) -> dict[str, Any]:
         return {**super().args, "sr": self._sr}

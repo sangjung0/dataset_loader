@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from functools import cached_property, lru_cache
-from typing import Sequence
 from typing_extensions import override
+from collections.abc import Sequence
 from datasets import (
     load_dataset,
     get_dataset_config_names,
@@ -33,7 +33,8 @@ class HuggingfaceLoader(DatasetLoader):
 
     @cached_property
     def config_names(self) -> list[str]:
-        return get_dataset_config_names(self.repo_id)
+        config_names: list[str] = get_dataset_config_names(self.repo_id)
+        return config_names
 
     @lru_cache(maxsize=32)
     def _split_names(self, config_name: str) -> list[str]:
@@ -41,7 +42,8 @@ class HuggingfaceLoader(DatasetLoader):
             raise ValueError(
                 f"Config name '{config_name}' is not valid. Available configs: {self.config_names}"
             )
-        return get_dataset_split_names(self.repo_id, config_name)
+        split_names: list[str] = get_dataset_split_names(self.repo_id, config_name)
+        return split_names
 
     def split_names(self, config_name: str) -> list[str]:
         return self._split_names(config_name)

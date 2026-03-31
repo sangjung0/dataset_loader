@@ -58,7 +58,7 @@ def parse_files(
         readlines = stm_file.read_text().splitlines()
         splitlines = [line.split(maxsplit=6) for line in readlines]
         file_ids, channel_ids, speaker_ids = set(), set(), set()
-        refs = []
+        refs: list[dict[str, Any]] = []
         for splitline in splitlines:
             if len(splitline) < 7:
                 raise ValueError(f"Invalid line in STM file {stm_file}: {splitline}")

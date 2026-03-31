@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 
 
@@ -15,7 +16,7 @@ class Sample:  # SampleProtocol
     """
 
     id: str = field(compare=True, hash=True, repr=True)
-    data: dict[str, Any] = field(compare=False, hash=False, repr=False)
+    data: Mapping[str, Any] = field(compare=False, hash=False, repr=False)
 
     def to_dict(self) -> dict[str, Any]:
         return {"id": self.id, "data": self.data}

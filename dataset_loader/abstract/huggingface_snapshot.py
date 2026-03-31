@@ -43,7 +43,8 @@ class HuggingfaceSnapshot(DatasetLoader):
                 **snapshot_options,
             }
 
-        return snapshot_download(**snapshot_options)
+        path: str = snapshot_download(**snapshot_options)
+        return path
 
     @override
     def load(self, name: str, load_options: Mapping[str, Any] | None = None) -> Dataset:
@@ -60,7 +61,8 @@ class HuggingfaceSnapshot(DatasetLoader):
                 **load_options,
             }
 
-        return load_dataset(**load_options)[name]
+        dataset:Dataset = load_dataset(**load_options)[name]
+        return dataset
 
 
 __all__ = ["HuggingfaceSnapshot"]

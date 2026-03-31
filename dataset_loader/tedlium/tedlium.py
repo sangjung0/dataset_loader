@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pandas as pd
 
-from typing import Sequence
+from typing import Any
 from typing_extensions import override
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 
 from dataset_loader.abstract import ParquetLoader
 
@@ -38,7 +38,7 @@ class Tedlium(ParquetLoader):
         )
 
     @override
-    def download(self, *args, **kwargs) -> None:
+    def download(self, *args: Any, **kwargs: Any) -> None:
         raise NotImplementedError(
             "Tedlium dataset is not available for download. Please download it manually from the official website and place it in the specified directory."
         )

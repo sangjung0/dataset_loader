@@ -3,10 +3,10 @@ from __future__ import annotations
 import numpy as np
 
 from abc import ABC
-from typing import Any, Iterable
+from typing import Any
 from typing_extensions import override, Self
+from collections.abc import Mapping, Iterable
 from datasets import Dataset as DT
-from collections.abc import Mapping
 
 from dataset_loader.base import Dataset
 
@@ -23,14 +23,14 @@ class HuggingfaceDataset(Dataset[DT], ABC):
             raise RuntimeError("Cannot get dataset of a cleaned dataset.")
         return self._dataset
 
-    @Dataset.args.getter
+    @property
     @override
     def args(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot get args of a cleaned dataset")
         return {**super().args, "dataset": self.dataset}
 
-    @Dataset.length.getter
+    @property
     @override
     def length(self) -> int:
         if self.is_cleaned or self.dataset is None:

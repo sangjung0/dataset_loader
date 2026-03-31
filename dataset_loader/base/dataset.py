@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from abc import ABC, abstractmethod
-from typing import Generator, Any, overload, TypeVar, Iterable
+from typing import Any, overload, TypeVar
 from typing_extensions import Self, override
-from collections.abc import Mapping
+from collections.abc import Mapping, Generator, Iterable
 
 from dataset_loader.protocol import DatasetProtocol
 from dataset_loader.base.sample import Sample
@@ -26,7 +26,7 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._is_cleaned = False
 
     @property
@@ -219,7 +219,7 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
     ) -> tuple[dict[str, Any], type[Dataset[T]]]:
         from sjpy.reference import import_from
 
-        _class = import_from(data)
+        _class: type[Dataset[T]] = import_from(data)
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
@@ -230,7 +230,6 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
                 f"Type mismatch: expected {_class.__name__}, got {data['type']}"
             )
 
-        _class: type[Dataset]
         d = {k: v for k, v in data.items() if k not in ("module", "qualname", "type")}
         return d, _class
 
