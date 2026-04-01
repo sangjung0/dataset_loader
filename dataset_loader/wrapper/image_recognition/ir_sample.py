@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 from typing import Any
+from typing_extensions import Self
 from dataclasses import dataclass, field
 from collections.abc import Mapping, MutableMapping, Callable
 
@@ -46,19 +47,20 @@ class IRSample(SampleProtocol):
     def to_dict(self) -> MutableMapping[str, Any]:
         return self.sample.to_dict()
 
-    @staticmethod
-    def from_dict(data: Mapping[str, Any]) -> IRSample:
-        return IRSample(sample=Sample.from_dict(data))
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
+        return cls(sample=Sample.from_dict(data))
 
-    @staticmethod
+    @classmethod
     def create(
+        cls,
         id: str,
         *,
         load_raw: Callable[[], npt.NDArray[np.uint8]] | None = None,
         raw: npt.NDArray[np.uint8] | None = None,
         label: str | dict[str, Any] | list[Any] | None = None,
         data: Mapping[str, Any] | None = None,
-    ) -> IRSample:
+    ) -> Self:
         if data is None:
             data = {}
         else:
@@ -75,7 +77,7 @@ class IRSample(SampleProtocol):
             data["label"] = label
 
         sample = Sample(id=id, data=data)
-        return IRSample(sample=sample)
+        return cls(sample=sample)
 
     def __str__(self) -> str:
         return f"IRSample(id={self.id}, label={self.label})"

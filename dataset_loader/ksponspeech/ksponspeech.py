@@ -52,7 +52,7 @@ class KSPonSpeech(HuggingfaceLoader):
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def valid(
@@ -63,7 +63,7 @@ class KSPonSpeech(HuggingfaceLoader):
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="valid", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
     def test(
@@ -74,7 +74,7 @@ class KSPonSpeech(HuggingfaceLoader):
     ) -> KSPonSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)
+            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
         return KSPonSpeechDataset(dataset=dataset, sr=sr)
 
 

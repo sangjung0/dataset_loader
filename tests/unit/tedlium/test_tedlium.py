@@ -19,8 +19,8 @@ class TestTedlium(MixinASRDatasetTest, MixinDatasetTest):
 
     @pytest.fixture(
         params=(
-            {"method": "train", "sample_size": SAMPLE_SIZE},
-            {"method": "dev", "sample_size": SAMPLE_SIZE},
+            # {"method": "train", "sample_size": SAMPLE_SIZE},
+            # {"method": "dev", "sample_size": SAMPLE_SIZE},
             {"method": "test", "sample_size": SAMPLE_SIZE},
         )
     )

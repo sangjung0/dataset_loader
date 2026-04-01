@@ -45,7 +45,7 @@ class LibriSpeech(ParquetLoader):
         return self._download_urls.copy()
 
     @overload
-    def download( # type: ignore[overload-overlap]
+    def download(  # type: ignore[overload-overlap]
         self,
         *,
         name: str | LibriSpeechSet,
@@ -125,7 +125,7 @@ class LibriSpeech(ParquetLoader):
         if not target.exists():
             raise FileNotFoundError(f"LibriSpeech dataset not found at: {target}")
 
-        data = []
+        data: list[dict[str, str]] = []
         for txt_path in tqdm(
             target.rglob("**/*.txt"), desc=f"Parsing {name}", disable=not verbose
         ):

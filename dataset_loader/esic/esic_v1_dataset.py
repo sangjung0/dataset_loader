@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 
-from typing import Any
+from typing import Any, cast
 from typing_extensions import override
 
 from sjpy.audio import load_from_mp4_file
@@ -42,7 +42,7 @@ class ESICv1Dataset(ParquetDataset):
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset.")
 
-        data: dict[str, Any] = self.dataset.iloc[idx].to_dict() # type: ignore[assignment]
+        data = cast(dict[str, Any], self.dataset.iloc[idx].to_dict())
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             mp4_path = data["mp4_path"]

@@ -44,7 +44,7 @@ class MixinDatasetTest(MixinDatasetProtocolTest):
     def test_dataset_to_config_and_from_config(
         self, dataset: Dataset[Any], samples: list[Sample]
     ) -> None:
-        type(self).assert_to_config_and_from_config(dataset, samples, Dataset[Any]) # type: ignore[type-abstract]
+        type(self).assert_to_config_and_from_config(dataset, samples, Dataset) # type:ignore[type-abstract]
 
     def test_dataset_sample_identity(self, dataset: Dataset[Any]) -> None:
         type(self).assert_sample_identity(dataset)

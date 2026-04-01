@@ -8,12 +8,12 @@ from collections.abc import Mapping, MutableMapping, Iterable, Generator
 
 from dataset_loader.protocol.sample_protocol import SampleProtocol
 
-T = TypeVar("T", covariant=True)
+D = TypeVar("D", covariant=True)
 S = TypeVar("S", bound=SampleProtocol, covariant=True)
 
 
 @runtime_checkable
-class DatasetProtocol(Protocol[T, S]):
+class DatasetProtocol(Protocol[D, S]):
     """
     이 프로토콜은 데이터셋이 가져야 하는 속성과 메서드를 정의합니다.
     데이터셋을 구현할 때 이 프로토콜을 사용하지 않습니다.
@@ -21,7 +21,7 @@ class DatasetProtocol(Protocol[T, S]):
     """
 
     @property
-    def dataset(self) -> T:
+    def dataset(self) -> D:
         """데이터셋의 정보를 담고있는 객체를 반환하는 속성입니다."""
         ...
 
@@ -265,15 +265,15 @@ class DatasetProtocol(Protocol[T, S]):
         ...
 
     @classmethod
-    def __setstate__(cls, data: Mapping[str, Any]) -> DatasetProtocol[T, S]:
+    def __setstate__(cls, state: Mapping[str, Any]) -> Self:
         """
         데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리에서 데이터셋 객체를 생성하는 클래스 메서드입니다. 이 메서드는 __getstate__ 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
 
         Args:
-            data: 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 __getstate__ 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
+            state: 데이터셋을 초기화하기 위한 데이터와 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 __getstate__ 메서드에서 반환된 딕셔너리를 사용하여 데이터셋을 복원할 수 있어야 합니다.
 
         Returns:
-            DatasetProtocol[T, S]: 주어진 딕셔너리를 설명하는 데이터셋 객체입니다.
+            Self: 주어진 딕셔너리를 설명하는 데이터셋 객체입니다.
         """
         ...
 
@@ -288,13 +288,13 @@ class DatasetProtocol(Protocol[T, S]):
 
     @classmethod
     def __set_import__(
-        cls, data: Mapping[str, Any]
-    ) -> tuple[MutableMapping[str, Any], type[DatasetProtocol[T, S]]]:
+        cls, import_info: Mapping[str, Any]
+    ) -> tuple[MutableMapping[str, Any], type[DatasetProtocol[D, S]]]:
         """
         데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 메서드입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
 
         Args:
-            data: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 데이터셋을 직렬화할 때 사용됩니다.
+            import_info: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리입니다. 이 딕셔너리는 데이터셋을 직렬화할 때 사용됩니다.
         Returns:
             tuple[MutableMapping[str, Any], type[DatasetProtocol[T, S]]]: 데이터셋을 초기화하기 위해서 참조하는 클래스를 import하는 데 필요한 정보를 포함하는 딕셔너리와 참조하는 클래스의 타입입니다. 이 메서드는 데이터셋을 직렬화할 때 사용됩니다.
         """
