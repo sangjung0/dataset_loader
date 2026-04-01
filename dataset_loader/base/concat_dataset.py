@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Any
+from typing import Any, TypeVar
 from typing_extensions import override, Self
-from collections.abc import Sequence, Iterable, Mapping
+from collections.abc import Sequence, Iterable, Mapping, MutableSequence
 
-from dataset_loader.protocol import DatasetProtocol
+from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
 
 from dataset_loader.base.dataset import Dataset
 from dataset_loader.base.sample import Sample
 
+D = TypeVar("D", bound=Dataset[Any])
 
-class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
+
+class ConcatDataset(Dataset[MutableSequence[D]], ConcatDatasetProtocol[Any, Any]):
     """
     여러 Dataset을 하나로 합치는 기능을 제공하는 클래스이다. 이 클래스는 Dataset을 상속하여 구현되며, 내부적으로 여러 Dataset을 리스트로 관리한다. \n
     ConcatDataset은 각 Dataset의 샘플을 순차적으로 연결하여 하나의 큰 Dataset처럼 동작한다.
@@ -23,7 +25,7 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
         ValueError: datasets가 비어있을 경우 발생한다.
     """
 
-    def __init__(self, *, datasets: Sequence[Dataset[Any]]):
+    def __init__(self, *, datasets: Sequence[D]):
         if len(datasets) == 0:
             raise ValueError("At least one dataset is required")
 
@@ -34,11 +36,11 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
             dts.append(dataset)
 
         super().__init__()
-        self._datasets: list[Dataset[Any]] = list(dts)
+        self._datasets: list[D] = list(dts)
 
     @property
     @override
-    def dataset(self) -> list[Dataset[Any]]:
+    def dataset(self) -> list[D]:
         return self._datasets.copy()
 
     @property
@@ -121,7 +123,7 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
         return self.slice(start=start, stop=start + size)
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
         elif isinstance(other, ConcatDataset):
@@ -137,7 +139,7 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
             return
         for ds in self._datasets:
             ds.clean()
-        self._datasets = []
+        self._datasets.clear()
         super().clean()
 
     @override
@@ -190,8 +192,8 @@ class ConcatDataset(Dataset[Sequence[DatasetProtocol[Any, Any]]]):
 
     @classmethod
     @override
-    def __setstate__(cls, data: Mapping[str, Any]) -> Self:
-        dataset = super().__setstate__(data)
+    def __setstate__(cls, state: Mapping[str, Any]) -> Self:
+        dataset = super().__setstate__(state)
         if not isinstance(dataset, cls):
             raise TypeError(
                 f"Invalid type for deserialization expected: {cls.__name__}, got: {type(dataset).__name__}"

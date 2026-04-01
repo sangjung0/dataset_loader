@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 from typing import Any
+from typing_extensions import Self, override
 from dataclasses import dataclass, field
 from collections.abc import Mapping, MutableMapping, Callable
 
@@ -16,10 +17,12 @@ class ASRSample(SampleProtocol):
     sample: SampleProtocol = field(compare=False, hash=True, repr=False)
 
     @property
+    @override
     def id(self) -> str:
         return self.sample.id
 
     @property
+    @override
     def data(self) -> Mapping[str, Any]:
         return self.sample.data
 
@@ -53,12 +56,14 @@ class ASRSample(SampleProtocol):
     def to_dict(self) -> MutableMapping[str, Any]:
         return self.sample.to_dict()
 
-    @staticmethod
-    def from_dict(data: Mapping[str, Any]) -> ASRSample:
-        return ASRSample(sample=Sample.from_dict(data))
+    @classmethod
+    @override
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
+        return cls(sample=Sample.from_dict(data))
 
-    @staticmethod
+    @classmethod
     def create(
+        cls,
         id: str,
         *,
         load_audio_func: Callable[[], npt.NDArray[np.float32]] | None = None,
@@ -66,7 +71,7 @@ class ASRSample(SampleProtocol):
         ref: str | None = None,
         diarization: list[Mapping[str, Any]] | None = None,
         data: Mapping[str, Any] | None = None,
-    ) -> ASRSample:
+    ) -> Self:
         if data is None:
             data = {}
         else:
@@ -88,7 +93,7 @@ class ASRSample(SampleProtocol):
             data["diarization"] = diarization
 
         sample = Sample(id=id, data=data)
-        return ASRSample(sample=sample)
+        return cls(sample=sample)
 
 
 __all__ = ["ASRSample"]

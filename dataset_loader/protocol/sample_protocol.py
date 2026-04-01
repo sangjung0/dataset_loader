@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Protocol, runtime_checkable, Any
+from typing_extensions import Self
 from collections.abc import Mapping, MutableMapping
 
 
@@ -26,8 +27,8 @@ class SampleProtocol(Protocol):
         """샘플을 딕셔너리로 변환하는 메서드입니다."""
         ...
 
-    @staticmethod
-    def from_dict(data: Mapping[str, Any]) -> SampleProtocol:
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
         """딕셔너리에서 샘플을 생성하는 정적 메서드입니다."""
         ...
 

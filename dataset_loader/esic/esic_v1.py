@@ -99,7 +99,7 @@ class ESICv1(ParquetLoader):
         verbose: bool = False,
         excludes: tuple[str, ...] = (),
     ) -> list[dict[str, Any]]:
-        data = []
+        data: list[dict[str, Any]] = []
         for d in tqdm(
             search_dirs(self.path / name, excludes=excludes),
             desc=f"Parsing {name}",

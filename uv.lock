@@ -4493,6 +4493,7 @@ dependencies = [
     { name = "rich" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -4504,6 +4505,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "rich", specifier = ">=14.2.0" },
     { name = "scipy", specifier = ">=1.15.3" },
+    { name = "tqdm", specifier = ">=4.67.3" },
 ]
 
 [package.metadata.requires-dev]
@@ -4514,9 +4516,14 @@ dev = [
     { name = "notebook", specifier = ">=7.4.7" },
 ]
 test = [
+    { name = "mypy", specifier = ">=1.20.0" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-dotenv", specifier = ">=0.5.2" },
     { name = "ruff", specifier = ">=0.15.8" },
+    { name = "scipy-stubs", specifier = ">=1.15.3.0" },
+    { name = "types-psutil", specifier = ">=7.2.2.20260130" },
+    { name = "types-pyyaml", specifier = ">=6.0.12.20250915" },
+    { name = "types-tqdm", specifier = ">=4.67.3.20260303" },
 ]
 
 [[package]]

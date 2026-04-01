@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from typing_extensions import Self
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
@@ -21,9 +22,9 @@ class Sample:  # SampleProtocol
     def to_dict(self) -> dict[str, Any]:
         return {"id": self.id, "data": self.data}
 
-    @staticmethod
-    def from_dict(data: Mapping[str, Any]) -> Sample:
-        return Sample(id=data["id"], data=data["data"])
+    @classmethod
+    def from_dict(cls, data: Mapping[str, Any]) -> Self:
+        return cls(id=data["id"], data=data["data"])
 
 
 __all__ = ["Sample"]

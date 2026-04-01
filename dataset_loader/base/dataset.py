@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from abc import ABC, abstractmethod
-from typing import Any, overload, TypeVar
+from typing import Any, overload, TypeVar, cast
 from typing_extensions import Self, override
 from collections.abc import Mapping, Generator, Iterable
 
@@ -61,11 +61,11 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         return self.__class__.__name__
 
     @override
-    def __iter__(self) -> Generator[Sample, Any, None]:
+    def __iter__(self) -> Generator[Sample, None, None]:
         yield from self.iter()
 
     @override
-    def iter(self) -> Generator[Sample, Any, None]:
+    def iter(self) -> Generator[Sample, None, None]:
         for idx in range(len(self)):
             yield self.get(idx)
 
@@ -143,11 +143,11 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         raise NotImplementedError
 
     @override
-    def __add__(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
+    def __add__(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
         return self.concat(other)
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
 
@@ -161,15 +161,18 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
             raise TypeError("Invalid type for concatenation")
 
     @abstractmethod
+    @override
     def get(self, idx: int) -> Sample:
         raise NotImplementedError
 
     @abstractmethod
+    @override
     def clean(self) -> None:
         if self.is_cleaned:
             return
         self._is_cleaned = True
 
+    @override
     def to_dict(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
@@ -177,9 +180,11 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
 
     @classmethod
     @abstractmethod
+    @override
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
         raise NotImplementedError
 
+    @override
     def __getstate__(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot serialize a cleaned dataset")
@@ -189,10 +194,11 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         }
 
     @classmethod
-    def __setstate__(cls, data: Mapping[str, Any]) -> Dataset[T]:
-        if all(k in data for k in ("module", "qualname", "type")):
-            data, dataset_cls = cls.__set_import__(data)
-        elif all(k not in data for k in ("module", "qualname", "type")):
+    @override
+    def __setstate__(cls, state: Mapping[str, Any]) -> Dataset[T]:
+        if all(k in state for k in ("module", "qualname", "type")):
+            state, dataset_cls = cls.__set_import__(state)
+        elif all(k not in state for k in ("module", "qualname", "type")):
             dataset_cls = cls
         else:
             raise ValueError("Invalid config data: missing module, qualname, or type")
@@ -202,8 +208,9 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         elif dataset_cls == Dataset[T]:
             raise TypeError("Cannot instantiate Dataset directly")
 
-        return dataset_cls.from_dict(data)
+        return dataset_cls.from_dict(state)
 
+    @override
     def __get_import__(self) -> dict[str, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot extract import data from a cleaned dataset")
@@ -214,23 +221,28 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         }
 
     @classmethod
+    @override
     def __set_import__(
-        cls, data: Mapping[str, Any]
+        cls, import_info: Mapping[str, Any]
     ) -> tuple[dict[str, Any], type[Dataset[T]]]:
-        from sjpy.reference import import_from
+        from sjpy.reference import import_from, ImportData
 
-        _class: type[Dataset[T]] = import_from(data)
+        _class: type[Dataset[T]] = import_from(cast(ImportData, import_info))
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
         elif not issubclass(_class, Dataset):
             raise TypeError(f"{_class} is not a subclass of Dataset or DatasetWrapper")
-        elif data["type"] != _class.__name__:
+        elif import_info["type"] != _class.__name__:
             raise TypeError(
-                f"Type mismatch: expected {_class.__name__}, got {data['type']}"
+                f"Type mismatch: expected {_class.__name__}, got {import_info['type']}"
             )
 
-        d = {k: v for k, v in data.items() if k not in ("module", "qualname", "type")}
+        d = {
+            k: v
+            for k, v in import_info.items()
+            if k not in ("module", "qualname", "type")
+        }
         return d, _class
 
 

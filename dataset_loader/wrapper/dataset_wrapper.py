@@ -3,11 +3,15 @@ from __future__ import annotations
 import numpy as np
 
 from abc import ABC, abstractmethod
-from typing import Any, overload, TypeVar
+from typing import Any, overload, TypeVar, cast
 from typing_extensions import Self, override
 from collections.abc import Mapping, Generator, Iterable
 
-from dataset_loader.protocol import DatasetProtocol, SampleProtocol
+from dataset_loader.protocol import (
+    DatasetProtocol,
+    SampleProtocol,
+    ConcatDatasetProtocol,
+)
 
 S = TypeVar("S", bound=SampleProtocol)
 T = TypeVar("T", bound=DatasetProtocol[Any, Any])
@@ -25,7 +29,7 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
         name (str): Dataset의 이름
     """
 
-    def __init__(self, *, dataset: T):
+    def __init__(self, dataset: T):
         self._dataset = dataset
 
     @property
@@ -107,12 +111,16 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
         return self.__class__(dataset=dataset)
 
     @override
-    def __add__(self, other: DatasetProtocol[Any, S]) -> DatasetWrapper[T, S]:
+    def __add__(
+        self, other: DatasetProtocol[Any, S]
+    ) -> DatasetWrapper[T, S] | DatasetWrapper[ConcatDatasetProtocol[T, S], S]:
         return self.concat(other)
 
     @abstractmethod
     @override
-    def concat(self, other: DatasetProtocol[Any, S]) -> DatasetWrapper[T, S]:
+    def concat(
+        self, other: DatasetProtocol[Any, S]
+    ) -> DatasetWrapper[T, S] | DatasetWrapper[ConcatDatasetProtocol[T, S], S]:
         raise NotImplementedError
 
     @abstractmethod
@@ -153,9 +161,9 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
 
     @classmethod
     @override
-    def __setstate__(cls, data: Mapping[str, Any]) -> DatasetWrapper[T, S]:
-        if all(k in data for k in ("module", "qualname", "type")):
-            state, wrapper_cls = cls.__set_import__(data)
+    def __setstate__(cls, state: Mapping[str, Any]) -> DatasetWrapper[T, S]:
+        if all(k in state for k in ("module", "qualname", "type")):
+            state, wrapper_cls = cls.__set_import__(state)
         else:
             raise ValueError("Invalid pointer data: missing module, qualname, or type")
 
@@ -182,23 +190,23 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     @classmethod
     @override
     def __set_import__(
-        cls, data: Mapping[str, Any]
+        cls, import_info: Mapping[str, Any]
     ) -> tuple[dict[str, Any], type[DatasetWrapper[T, S]]]:
-        from sjpy.reference import import_from
+        from sjpy.reference import import_from, ImportData
 
-        _class: type[DatasetWrapper[T, S]] = import_from(data)
+        _class: type[DatasetWrapper[T, S]] = import_from(cast(ImportData, import_info))
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
         elif not issubclass(_class, DatasetWrapper):
             raise TypeError(f"{_class} is not a subclass of DatasetWrapper")
-        elif data["type"] != _class.__name__:
+        elif import_info["type"] != _class.__name__:
             raise TypeError(
-                f"Type mismatch: expected {_class.__name__}, got {data['type']}"
+                f"Type mismatch: expected {_class.__name__}, got {import_info['type']}"
             )
 
         state = {
-            k: v for k, v in data.items() if k not in ("module", "qualname", "type")
+            k: v for k, v in import_info.items() if k not in ("module", "qualname", "type")
         }
         return state, _class
 
