@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from dataset_loader.base import Dataset, Sample
 
 
-class DummyDataset(Dataset["DummyDataset"]):
+class DummyDataset(Dataset["DummyDataset", Sample]):
     def __init__(self: DummyDataset, *, samples: list[Sample]):
         super().__init__()
         self._samples = list(samples)

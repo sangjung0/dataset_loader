@@ -51,7 +51,7 @@ class ZerothKorean(HuggingfaceLoader):
     ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)
+            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
         return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
     def test(
@@ -62,7 +62,7 @@ class ZerothKorean(HuggingfaceLoader):
     ) -> ZerothKoreanDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)
+            return ZerothKoreanDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
         return ZerothKoreanDataset(dataset=dataset, sr=sr)
 
 

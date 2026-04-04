@@ -10,13 +10,13 @@ from typing_extensions import override
 
 from sjpy.audio import load_from_mp4_file
 
-from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
 from dataset_loader.esic.constants import VERBATIM
+from dataset_loader.esic.esic_v1_sample import ESICv1Sample
 
 
-class ESICv1Dataset(ParquetDataset):
+class ESICv1Dataset(ParquetDataset[ESICv1Sample]):
     def __init__(self, *, parquet: pd.DataFrame, sr: int):
         super().__init__(parquet=parquet)
         self._sr: int = sr
@@ -38,7 +38,7 @@ class ESICv1Dataset(ParquetDataset):
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> ESICv1Sample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset.")
 
@@ -55,7 +55,7 @@ class ESICv1Dataset(ParquetDataset):
             "ref": re.sub(r"\s+", " ", data[VERBATIM]).strip(),
             **data,
         }
-        return Sample(id=_id, data=result)
+        return ESICv1Sample(id=_id, data=result)
 
 
 __all__ = ["ESICv1Dataset"]

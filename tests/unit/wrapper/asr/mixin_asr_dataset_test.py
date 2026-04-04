@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataset_loader.wrapper.asr import ASRDataset, ASRSample, ASRConcatDataset
+from dataset_loader.abstract import ASRSample
+from dataset_loader.wrapper.asr import ASRDataset, ASRConcatDataset
 
 from tests.unit.protocol import MixinDatasetProtocolTest
 

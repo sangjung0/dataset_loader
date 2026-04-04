@@ -14,10 +14,10 @@ from dataset_loader.protocol import (
 )
 
 S = TypeVar("S", bound=SampleProtocol)
-T = TypeVar("T", bound=DatasetProtocol[Any, Any])
+D = TypeVar("D", bound=DatasetProtocol[Any, Any])
 
 
-class DatasetWrapper(DatasetProtocol[T, S], ABC):
+class DatasetWrapper(DatasetProtocol[D, S], ABC):
     """
     Dataset의 래핑 클래스이다. \n
     다양한 도메인에 대해서 대응하기 위한 인터페이스를 제공한다.
@@ -29,12 +29,12 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
         name (str): Dataset의 이름
     """
 
-    def __init__(self, dataset: T):
+    def __init__(self, dataset: D):
         self._dataset = dataset
 
     @property
     @override
-    def dataset(self) -> T:
+    def dataset(self) -> D:
         return self._dataset
 
     @property
@@ -82,10 +82,12 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     def getitem(self, key: int) -> S: ...
     @overload
     def getitem(self, key: slice | Iterable[int]) -> Self: ...
-    @abstractmethod
     @override
     def getitem(self, key: int | slice | Iterable[int]) -> S | Self:
-        raise NotImplementedError
+        result = self.dataset[key]
+        if isinstance(result, SampleProtocol):
+            return cast(S, result)
+        return self.__class__(dataset=cast(D, result))
 
     @override
     def select(self, indices: Iterable[int]) -> Self:
@@ -113,20 +115,19 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     @override
     def __add__(
         self, other: DatasetProtocol[Any, S]
-    ) -> DatasetWrapper[T, S] | DatasetWrapper[ConcatDatasetProtocol[T, S], S]:
+    ) -> DatasetWrapper[D, S] | DatasetWrapper[ConcatDatasetProtocol[D, S], S]:
         return self.concat(other)
 
     @abstractmethod
     @override
     def concat(
         self, other: DatasetProtocol[Any, S]
-    ) -> DatasetWrapper[T, S] | DatasetWrapper[ConcatDatasetProtocol[T, S], S]:
+    ) -> DatasetWrapper[D, S] | DatasetWrapper[ConcatDatasetProtocol[D, S], S]:
         raise NotImplementedError
 
-    @abstractmethod
     @override
     def get(self, idx: int) -> S:
-        raise NotImplementedError
+        return cast(S, self.dataset.get(idx))
 
     @override
     def clean(self) -> None:
@@ -161,7 +162,7 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
 
     @classmethod
     @override
-    def __setstate__(cls, state: Mapping[str, Any]) -> DatasetWrapper[T, S]:
+    def __setstate__(cls, state: Mapping[str, Any]) -> DatasetWrapper[Any, Any]:
         if all(k in state for k in ("module", "qualname", "type")):
             state, wrapper_cls = cls.__set_import__(state)
         else:
@@ -171,6 +172,10 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
             raise TypeError(f"{wrapper_cls} is not a subclass of DatasetWrapper")
         elif wrapper_cls == DatasetWrapper:
             raise TypeError("Cannot instantiate DatasetWrapper directly")
+        elif cls != DatasetWrapper and wrapper_cls != cls:
+            raise TypeError(
+                f"Invalid type for deserialization, expected {cls}, got {wrapper_cls}"
+            )
 
         from sjpy.reference import import_from
 
@@ -191,10 +196,12 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
     @override
     def __set_import__(
         cls, import_info: Mapping[str, Any]
-    ) -> tuple[dict[str, Any], type[DatasetWrapper[T, S]]]:
+    ) -> tuple[dict[str, Any], type[DatasetWrapper[Any, Any]]]:
         from sjpy.reference import import_from, ImportData
 
-        _class: type[DatasetWrapper[T, S]] = import_from(cast(ImportData, import_info))
+        _class: type[DatasetWrapper[Any, Any]] = import_from(
+            cast(ImportData, import_info)
+        )
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
@@ -206,7 +213,9 @@ class DatasetWrapper(DatasetProtocol[T, S], ABC):
             )
 
         state = {
-            k: v for k, v in import_info.items() if k not in ("module", "qualname", "type")
+            k: v
+            for k, v in import_info.items()
+            if k not in ("module", "qualname", "type")
         }
         return state, _class
 

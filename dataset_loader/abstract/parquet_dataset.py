@@ -4,14 +4,16 @@ import numpy as np
 import pandas as pd
 
 from abc import ABC
-from typing import Any
+from typing import Any, TypeVar
 from typing_extensions import override, Self
 from collections.abc import Mapping, Iterable
 
-from dataset_loader.base import Dataset
+from dataset_loader.base import Dataset, Sample
+
+S = TypeVar("S", bound=Sample)
 
 
-class ParquetDataset(Dataset[pd.DataFrame], ABC):
+class ParquetDataset(Dataset[pd.DataFrame, S], ABC):
     def __init__(self, *, parquet: pd.DataFrame):
         super().__init__()
         self._parquet: pd.DataFrame = parquet

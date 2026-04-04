@@ -10,11 +10,12 @@ from typing import Any
 from typing_extensions import override
 from collections.abc import Sequence
 
-from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
+from dataset_loader.tedlium.tedlium_sample import TedliumSample
 
-class TedliumDataset(ParquetDataset):
+
+class TedliumDataset(ParquetDataset[TedliumSample]):
     def __init__(
         self,
         *,
@@ -43,7 +44,7 @@ class TedliumDataset(ParquetDataset):
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> TedliumSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
 
@@ -68,7 +69,7 @@ class TedliumDataset(ParquetDataset):
             **data,
         }
 
-        return Sample(id=_id, data=result)
+        return TedliumSample(id=_id, data=result)
 
 
 __all__ = ["TedliumDataset"]
