@@ -10,10 +10,11 @@ from pathvalidate import sanitize_filepath
 from datasets import Dataset, Audio
 
 from dataset_loader.abstract import HuggingfaceDataset
-from dataset_loader.base import Sample
+
+from dataset_loader.ksponspeech.ksponspeech_sample import KSponSpeechSample
 
 
-class KSPonSpeechDataset(HuggingfaceDataset):
+class KSPonSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
     def __init__(self, *, dataset: Dataset, sr: int):
         d0 = dataset[0]
         if "path" not in d0:
@@ -55,7 +56,7 @@ class KSPonSpeechDataset(HuggingfaceDataset):
         self._dataset = self.dataset.cast_column("audio", Audio(sampling_rate=sr))
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> KSponSpeechSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
         data = self.dataset[idx]
@@ -78,7 +79,7 @@ class KSPonSpeechDataset(HuggingfaceDataset):
             "ref": re.sub(r"\s+", " ", data["transcripts"]),
         }
 
-        return Sample(id=_id, data=result)
+        return KSponSpeechSample(id=_id, data=result)
 
 
 __all__ = ["KSPonSpeechDataset"]

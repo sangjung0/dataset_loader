@@ -4,47 +4,34 @@ import numpy as np
 import numpy.typing as npt
 
 from typing import Any
-from typing_extensions import Self, override
-from dataclasses import dataclass, field
-from collections.abc import Mapping, MutableMapping, Callable
+from typing_extensions import Self
+from dataclasses import dataclass
+from collections.abc import Mapping, Callable
 
-from dataset_loader.protocol import SampleProtocol
 from dataset_loader.base.sample import Sample
 
 
-@dataclass(frozen=True)
-class ASRSample(SampleProtocol):
-    sample: SampleProtocol = field(compare=False, hash=True, repr=False)
-
-    @property
-    @override
-    def id(self) -> str:
-        return self.sample.id
-
-    @property
-    @override
-    def data(self) -> Mapping[str, Any]:
-        return self.sample.data
-
+@dataclass(frozen=True, slots=True)
+class ASRSample(Sample):
     @property
     def audio(self) -> npt.NDArray[np.float32]:
-        if "load_audio_func" not in self.sample.data:
+        if "load_audio_func" not in self.data:
             raise AttributeError("Audio data is not available in this sample")
-        audio: npt.NDArray[np.float32] = self.sample.data["load_audio_func"]()
+        audio: npt.NDArray[np.float32] = self.data["load_audio_func"]()
         return audio
 
     @property
     def ref(self) -> str:
-        if "ref" not in self.sample.data:
+        if "ref" not in self.data:
             raise AttributeError("ASR label is not available in this sample")
-        ref: str = self.sample.data["ref"]
+        ref: str = self.data["ref"]
         return ref
 
     @property
     def diarization(self) -> list[dict[str, Any]]:
-        if "diarization" not in self.sample.data:
+        if "diarization" not in self.data:
             raise AttributeError("Diarization label is not available in this sample")
-        diarization: list[dict[str, Any]] = self.sample.data["diarization"]
+        diarization: list[dict[str, Any]] = self.data["diarization"]
         return diarization
 
     def loaded_audio_sample(self) -> ASRSample:
@@ -52,14 +39,6 @@ class ASRSample(SampleProtocol):
         audio = self.audio
         data["load_audio_func"] = lambda: audio
         return ASRSample.create(id=self.id, data=data)
-
-    def to_dict(self) -> MutableMapping[str, Any]:
-        return self.sample.to_dict()
-
-    @classmethod
-    @override
-    def from_dict(cls, data: Mapping[str, Any]) -> Self:
-        return cls(sample=Sample.from_dict(data))
 
     @classmethod
     def create(
@@ -92,8 +71,7 @@ class ASRSample(SampleProtocol):
         if "diarization" not in data and diarization is not None:
             data["diarization"] = diarization
 
-        sample = Sample(id=id, data=data)
-        return cls(sample=sample)
+        return cls(id=id, data=data)
 
 
 __all__ = ["ASRSample"]

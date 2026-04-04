@@ -11,10 +11,11 @@ from datasets import Dataset
 from pathvalidate import sanitize_filepath
 
 from dataset_loader.abstract import HuggingfaceDataset
-from dataset_loader.base import Sample
+
+from dataset_loader.zerothkorean.zeroth_korean_sample import ZerothKoreanSample
 
 
-class ZerothKoreanDataset(HuggingfaceDataset):
+class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
     def __init__(self, *, dataset: Dataset, sr: int):
         super().__init__(dataset=dataset)
         self._sr = sr
@@ -41,7 +42,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
         self._sr = value
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> ZerothKoreanSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
         data = self.dataset[idx]
@@ -62,7 +63,7 @@ class ZerothKoreanDataset(HuggingfaceDataset):
                 }
             ],
         }
-        return Sample(id=_id, data=result)
+        return ZerothKoreanSample(id=_id, data=result)
 
     def _resample_audio(
         self, audio: npt.NDArray[np.float32]

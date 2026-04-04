@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, overload
-from typing_extensions import override, Self
-from collections.abc import Iterable, MutableSequence
+from typing import Any
+from typing_extensions import override
+from collections.abc import MutableSequence
 
-from dataset_loader.protocol import (
-    DatasetProtocol,
-    SampleProtocol,
-    ConcatDatasetProtocol,
-)
+from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
+from dataset_loader.abstract import ASRSample
 
 from dataset_loader.wrapper.asr.protocol import ASRDatasetProtocol
 from dataset_loader.wrapper.asr.asr_dataset_mixin import ASRDatasetMixin
-from dataset_loader.wrapper.asr.asr_sample import ASRSample
 
 
 class ASRConcatDataset(
@@ -43,17 +39,6 @@ class ASRConcatDataset(
     @property
     def names(self) -> MutableSequence[str]:
         return self.dataset.names
-
-    @overload
-    def getitem(self, key: int) -> ASRSample: ...
-    @overload
-    def getitem(self, key: slice | Iterable[int]) -> Self: ...
-    @override
-    def getitem(self, key: int | slice | Iterable[int]) -> ASRSample | Self:
-        result = self.dataset[key]
-        if isinstance(result, SampleProtocol):
-            return ASRSample(sample=result)
-        return self.__class__(dataset=result)
 
     @override
     def concat(self, other: DatasetProtocol[Any, Any]) -> ASRConcatDataset:

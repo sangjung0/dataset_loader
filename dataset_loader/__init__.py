@@ -3,6 +3,9 @@
 ## Protocol
 from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
+## Abstract
+from dataset_loader.abstract import ASRSample, IRSample
+
 ## Base
 from dataset_loader.base import Sample
 
@@ -14,8 +17,8 @@ from dataset_loader.tedlium import Tedlium, TedliumDataset
 from dataset_loader.zerothkorean import ZerothKorean, ZerothKoreanDataset
 
 ## Wrappers
-from dataset_loader.wrapper.asr import ASRDataset, ASRSample
-from dataset_loader.wrapper.image_recognition import IRDataset, IRSample
+from dataset_loader.wrapper.asr import ASRDataset
+from dataset_loader.wrapper.image_recognition import IRDataset
 
 __all__ = [
     "DatasetProtocol",

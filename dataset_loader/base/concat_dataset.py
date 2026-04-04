@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from typing_extensions import override, Self
 from collections.abc import Sequence, Iterable, Mapping, MutableSequence
 
@@ -11,10 +11,11 @@ from dataset_loader.protocol import DatasetProtocol, ConcatDatasetProtocol
 from dataset_loader.base.dataset import Dataset
 from dataset_loader.base.sample import Sample
 
-D = TypeVar("D", bound=Dataset[Any])
+D = TypeVar("D", bound=Dataset[Any, Any])
+S = TypeVar("S", bound=Sample)
 
 
-class ConcatDataset(Dataset[MutableSequence[D]], ConcatDatasetProtocol[Any, Any]):
+class ConcatDataset(Dataset[MutableSequence[D], S], ConcatDatasetProtocol[D, S]):
     """
     여러 Dataset을 하나로 합치는 기능을 제공하는 클래스이다. 이 클래스는 Dataset을 상속하여 구현되며, 내부적으로 여러 Dataset을 리스트로 관리한다. \n
     ConcatDataset은 각 Dataset의 샘플을 순차적으로 연결하여 하나의 큰 Dataset처럼 동작한다.
@@ -123,7 +124,7 @@ class ConcatDataset(Dataset[MutableSequence[D]], ConcatDatasetProtocol[Any, Any]
         return self.slice(start=start, stop=start + size)
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
         elif isinstance(other, ConcatDataset):
@@ -143,12 +144,12 @@ class ConcatDataset(Dataset[MutableSequence[D]], ConcatDatasetProtocol[Any, Any]
         super().clean()
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> S:
         start = 0
         for ds in self._datasets:
             d_idx = idx - start
             if d_idx < len(ds):
-                return ds.get(d_idx)
+                return cast(S, ds.get(d_idx))
             start += len(ds)
         raise IndexError("Index out of range")
 

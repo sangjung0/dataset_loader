@@ -3,15 +3,17 @@ from __future__ import annotations
 import numpy as np
 
 from abc import ABC
-from typing import Any
+from typing import Any, TypeVar
 from typing_extensions import override, Self
 from collections.abc import Mapping, Iterable
 from datasets import Dataset as DT
 
-from dataset_loader.base import Dataset
+from dataset_loader.base import Dataset, Sample
+
+S = TypeVar("S", bound=Sample)
 
 
-class HuggingfaceDataset(Dataset[DT], ABC):
+class HuggingfaceDataset(Dataset[DT, S], ABC):
     def __init__(self, *, dataset: DT):
         super().__init__()
         self._dataset: DT | None = dataset

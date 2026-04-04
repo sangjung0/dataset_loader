@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataset_loader.wrapper.image_recognition import IRDataset, IRSample
+from dataset_loader.abstract import IRSample
+from dataset_loader.wrapper.image_recognition import IRDataset
 
 from tests.unit.protocol import MixinDatasetProtocolTest
 

@@ -3,8 +3,9 @@ from __future__ import annotations
 import pytest
 
 from dataset_loader.base import Sample
+from dataset_loader.abstract import ASRSample
 from dataset_loader.tedlium import Tedlium, TedliumDataset
-from dataset_loader.wrapper.asr import ASRDataset, ASRSample, ASRDatasetProtocol
+from dataset_loader.wrapper.asr import ASRDataset, ASRDatasetProtocol
 
 from tests.unit.base import MixinDatasetTest
 from tests.unit.wrapper.asr import MixinASRDatasetTest

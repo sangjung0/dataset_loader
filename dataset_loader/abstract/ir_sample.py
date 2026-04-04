@@ -5,37 +5,26 @@ import numpy.typing as npt
 
 from typing import Any
 from typing_extensions import Self
-from dataclasses import dataclass, field
-from collections.abc import Mapping, MutableMapping, Callable
+from dataclasses import dataclass
+from collections.abc import Mapping, Callable
 
-from dataset_loader.protocol import SampleProtocol
 from dataset_loader.base.sample import Sample
 
 
-@dataclass(frozen=True)
-class IRSample(SampleProtocol):
-    sample: SampleProtocol = field(compare=False, hash=True, repr=True)
-
-    @property
-    def id(self) -> str:
-        return self.sample.id
-
-    @property
-    def data(self) -> Mapping[str, Any]:
-        return self.sample.data
-
+@dataclass(frozen=True, slots=True)
+class IRSample(Sample):
     @property
     def raw(self) -> npt.NDArray[np.uint8]:
-        if "load_raw" not in self.sample.data:
+        if "load_raw" not in self.data:
             raise AttributeError("Raw image data is not available in this sample")
-        audio: npt.NDArray[np.uint8] = self.sample.data["load_raw"]()
-        return audio
+        image: npt.NDArray[np.uint8] = self.data["load_raw"]()
+        return image
 
     @property
     def label(self) -> str | dict[str, Any] | list[Any]:
-        if "label" not in self.sample.data:
+        if "label" not in self.data:
             raise AttributeError("Label is not available in this sample")
-        label: str | dict[str, Any] | list[Any] = self.sample.data["label"]
+        label: str | dict[str, Any] | list[Any] = self.data["label"]
         return label
 
     def loaded_ir_sample(self) -> IRSample:
@@ -43,13 +32,6 @@ class IRSample(SampleProtocol):
         raw = self.raw
         data["load_raw"] = lambda: raw
         return IRSample.create(id=self.id, data=data)
-
-    def to_dict(self) -> MutableMapping[str, Any]:
-        return self.sample.to_dict()
-
-    @classmethod
-    def from_dict(cls, data: Mapping[str, Any]) -> Self:
-        return cls(sample=Sample.from_dict(data))
 
     @classmethod
     def create(
@@ -76,8 +58,7 @@ class IRSample(SampleProtocol):
                 raise ValueError("Label must be provided")
             data["label"] = label
 
-        sample = Sample(id=id, data=data)
-        return cls(sample=sample)
+        return cls(id=id, data=data)
 
     def __str__(self) -> str:
         return f"IRSample(id={self.id}, label={self.label})"

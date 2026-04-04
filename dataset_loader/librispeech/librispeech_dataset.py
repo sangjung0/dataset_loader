@@ -8,11 +8,12 @@ import pandas as pd
 from typing import Any
 from typing_extensions import override
 
-from dataset_loader.base import Sample
 from dataset_loader.abstract import ParquetDataset
 
+from dataset_loader.librispeech.librispeech_sample import LibriSpeechSample
 
-class LibriSpeechDataset(ParquetDataset):
+
+class LibriSpeechDataset(ParquetDataset[LibriSpeechSample]):
     def __init__(
         self: LibriSpeechDataset,
         *,
@@ -39,7 +40,7 @@ class LibriSpeechDataset(ParquetDataset):
             raise ValueError("Sample rate must be a positive integer")
 
     @override
-    def get(self: LibriSpeechDataset, idx: int) -> Sample:
+    def get(self: LibriSpeechDataset, idx: int) -> LibriSpeechSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset.")
         data = self.dataset.iloc[idx].to_dict()
@@ -55,7 +56,7 @@ class LibriSpeechDataset(ParquetDataset):
             "ref": data["ref"],
         }
 
-        return Sample(id=_id, data=result)
+        return LibriSpeechSample(id=_id, data=result)
 
 
 __all__ = ["LibriSpeechDataset"]

@@ -11,10 +11,11 @@ from datasets import Dataset, Audio
 from sjpy.string import remove_spaces_and_symbols
 
 from dataset_loader.abstract import HuggingfaceDataset
-from dataset_loader.base import Sample
+
+from dataset_loader.tedlium.segment_tedlium_sample import SegmentTedliumSample
 
 
-class SegmentTedliumDataset(HuggingfaceDataset):
+class SegmentTedliumDataset(HuggingfaceDataset[SegmentTedliumSample]):
     def __init__(self, *, dataset: Dataset, sr: int, ignore_set: Sequence[str]):
         super().__init__(dataset=dataset)
 
@@ -54,7 +55,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         self._dataset = self.dataset.cast_column("audio", Audio(sampling_rate=sr))
 
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> SegmentTedliumSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
         data = self.dataset[idx]
@@ -85,7 +86,7 @@ class SegmentTedliumDataset(HuggingfaceDataset):
         }
 
         _id = remove_spaces_and_symbols(data["id"])[-255:]
-        return Sample(id=_id, data=result)
+        return SegmentTedliumSample(id=_id, data=result)
 
 
 __all__ = ["SegmentTedliumDataset"]

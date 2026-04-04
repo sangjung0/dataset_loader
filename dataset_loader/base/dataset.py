@@ -17,9 +17,10 @@ if TYPE_CHECKING:
 
 
 T = TypeVar("T")
+S = TypeVar("S", bound=Sample)
 
 
-class Dataset(DatasetProtocol[T, Sample], ABC):
+class Dataset(DatasetProtocol[T, S], ABC):
     """
     다양한 Dataset을 위한 공통 추상 클래스이다. \n
     다른 라이브러리의 Dataset을 래핑하거나, 자체적으로 Dataset을 구현할 때 이 클래스를 상속하여 구현한다.
@@ -61,28 +62,28 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         return self.__class__.__name__
 
     @override
-    def __iter__(self) -> Generator[Sample, None, None]:
+    def __iter__(self) -> Generator[S, None, None]:
         yield from self.iter()
 
     @override
-    def iter(self) -> Generator[Sample, None, None]:
+    def iter(self) -> Generator[S, None, None]:
         for idx in range(len(self)):
             yield self.get(idx)
 
     @overload
-    def __getitem__(self, key: int) -> Sample: ...
+    def __getitem__(self, key: int) -> S: ...
     @overload
     def __getitem__(self, key: slice | Iterable[int]) -> Self: ...
     @override
-    def __getitem__(self, key: int | slice | Iterable[int]) -> Sample | Self:
+    def __getitem__(self, key: int | slice | Iterable[int]) -> S | Self:
         return self.getitem(key)
 
     @overload
-    def getitem(self, key: int) -> Sample: ...
+    def getitem(self, key: int) -> S: ...
     @overload
     def getitem(self, key: slice | Iterable[int]) -> Self: ...
     @override
-    def getitem(self, key: int | slice | Iterable[int]) -> Sample | Self:
+    def getitem(self, key: int | slice | Iterable[int]) -> S | Self:
         if self.is_cleaned:
             raise RuntimeError("Cannot access a cleaned dataset")
         elif isinstance(key, slice):
@@ -143,11 +144,11 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
         raise NotImplementedError
 
     @override
-    def __add__(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
+    def __add__(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any, Any]:
         return self.concat(other)
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any]:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ConcatDataset[Any, Any]:
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
 
@@ -162,7 +163,7 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
 
     @abstractmethod
     @override
-    def get(self, idx: int) -> Sample:
+    def get(self, idx: int) -> S:
         raise NotImplementedError
 
     @abstractmethod
@@ -195,7 +196,7 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
 
     @classmethod
     @override
-    def __setstate__(cls, state: Mapping[str, Any]) -> Dataset[T]:
+    def __setstate__(cls, state: Mapping[str, Any]) -> Dataset[T, S]:
         if all(k in state for k in ("module", "qualname", "type")):
             state, dataset_cls = cls.__set_import__(state)
         elif all(k not in state for k in ("module", "qualname", "type")):
@@ -205,7 +206,7 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
 
         if not issubclass(dataset_cls, Dataset):
             raise TypeError(f"{dataset_cls} is not a subclass of Dataset")
-        elif dataset_cls == Dataset[T]:
+        elif dataset_cls == Dataset[T, S]:
             raise TypeError("Cannot instantiate Dataset directly")
 
         return dataset_cls.from_dict(state)
@@ -224,10 +225,10 @@ class Dataset(DatasetProtocol[T, Sample], ABC):
     @override
     def __set_import__(
         cls, import_info: Mapping[str, Any]
-    ) -> tuple[dict[str, Any], type[Dataset[T]]]:
+    ) -> tuple[dict[str, Any], type[Dataset[T, S]]]:
         from sjpy.reference import import_from, ImportData
 
-        _class: type[Dataset[T]] = import_from(cast(ImportData, import_info))
+        _class: type[Dataset[T, S]] = import_from(cast(ImportData, import_info))
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")
