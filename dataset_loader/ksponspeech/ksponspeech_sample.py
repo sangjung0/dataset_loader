@@ -6,7 +6,7 @@ from dataset_loader.abstract import ASRSample
 
 
 @dataclass(frozen=True, slots=True)
-class KSponSpeechSample(ASRSample):
+class KSponSpeechSample(ASRSample[str, None]):
     """
     KSponSpeech 데이터셋의 샘플을 나타내는 클래스.
     """

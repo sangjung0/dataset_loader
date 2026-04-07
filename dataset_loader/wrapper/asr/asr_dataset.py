@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-from typing import Any, cast
+from typing import Any, cast, TypeVar
 from typing_extensions import override
 
 from dataset_loader.protocol import DatasetProtocol
@@ -14,8 +14,17 @@ from dataset_loader.wrapper.asr.asr_dataset_mixin import ASRDatasetMixin
 if TYPE_CHECKING:
     from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
 
+RefT = TypeVar("RefT")
+DiarizationT = TypeVar("DiarizationT")
 
-class ASRDataset(ASRDatasetMixin[ASRDatasetProtocol]):
+
+class ASRDataset(ASRDatasetMixin[RefT, DiarizationT]):
+
+    @property
+    @override
+    def dataset(self) -> ASRDatasetProtocol:
+        return cast(ASRDatasetProtocol, super().dataset)
+
     @property
     def sr(self) -> int:
         return self.dataset.sr
@@ -25,7 +34,7 @@ class ASRDataset(ASRDatasetMixin[ASRDatasetProtocol]):
         self.dataset.sr = value
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ASRConcatDataset:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ASRConcatDataset[Any, Any]:
         from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
         from dataset_loader.wrapper.asr.asr_dataset import ASRDataset
 
@@ -35,7 +44,7 @@ class ASRDataset(ASRDatasetMixin[ASRDatasetProtocol]):
         # ASRDataset인 경우
         if isinstance(other, ASRDataset):
             dataset = cast(
-                ConcatDataset[Any, ASRSample],
+                ConcatDataset[Any, ASRSample[Any, Any]],
                 self.dataset + other.dataset,
             )
             return ASRConcatDataset(dataset)

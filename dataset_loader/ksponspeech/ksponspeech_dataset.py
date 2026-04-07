@@ -14,7 +14,7 @@ from dataset_loader.abstract import HuggingfaceDataset
 from dataset_loader.ksponspeech.ksponspeech_sample import KSponSpeechSample
 
 
-class KSPonSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
+class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
     def __init__(self, *, dataset: Dataset, sr: int):
         d0 = dataset[0]
         if "path" not in d0:
@@ -82,4 +82,4 @@ class KSPonSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
         return KSponSpeechSample(id=_id, data=result)
 
 
-__all__ = ["KSPonSpeechDataset"]
+__all__ = ["KSponSpeechDataset"]

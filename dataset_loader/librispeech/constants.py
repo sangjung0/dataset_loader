@@ -12,8 +12,8 @@ LibriSpeechSet = Literal[
 ]
 
 # Defaults
-DEFAULT_SAMPLE_RATE = 16_000
-DEFAULT_DOWNLOAD_URLS = {
+DEFAULT_SAMPLE_RATE: int = 16_000
+DEFAULT_DOWNLOAD_URLS: dict[str, str] = {
     "dev-clean": "https://openslr.trmal.net/resources/12/dev-clean.tar.gz",
     "dev-other": "https://openslr.trmal.net/resources/12/dev-other.tar.gz",
     "test-clean": "https://openslr.trmal.net/resources/12/test-clean.tar.gz",
@@ -22,7 +22,7 @@ DEFAULT_DOWNLOAD_URLS = {
     "train-clean-360": "https://openslr.trmal.net/resources/12/train-clean-360.tar.gz",
     "train-other-500": "https://openslr.trmal.net/resources/12/train-other-500.tar.gz",
 }
-DATA_PARQUET = {
+DATA_PARQUET: dict[str, str] = {
     "train-clean-100": "train-clean-100.parquet",
     "train-clean-360": "train-clean-360.parquet",
     "train-other-500": "train-other-500.parquet",

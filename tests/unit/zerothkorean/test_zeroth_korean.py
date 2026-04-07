@@ -2,9 +2,15 @@ from __future__ import annotations
 
 import pytest
 
-from dataset_loader.base import Sample
-from dataset_loader.abstract import ASRSample
-from dataset_loader.zerothkorean import ZerothKorean, ZerothKoreanDataset
+from dataset_loader import (
+    Sample,
+    ASRSample,
+    ASRDataset,
+    ASRDatasetProtocol,
+    ZerothKorean,
+    ZerothKoreanDataset,
+    ZerothKoreanDiarizationLabel,
+)
 from dataset_loader.wrapper.asr import ASRDataset, ASRDatasetProtocol
 
 from tests.unit.base import MixinDatasetTest
@@ -13,7 +19,9 @@ from tests.unit.wrapper.asr import MixinASRDatasetTest
 SAMPLE_SIZE = 200
 
 
-class TestZerothKorean(MixinASRDatasetTest, MixinDatasetTest):
+class TestZerothKorean(
+    MixinASRDatasetTest[str, list[ZerothKoreanDiarizationLabel]], MixinDatasetTest
+):
     @pytest.fixture
     def zerothkorean(self) -> ZerothKorean:
         return ZerothKorean()
@@ -39,13 +47,17 @@ class TestZerothKorean(MixinASRDatasetTest, MixinDatasetTest):
         return [sample for sample in dataset]
 
     @pytest.fixture
-    def asr_dataset(self, dataset: ZerothKoreanDataset) -> ASRDataset:
+    def asr_dataset(
+        self, dataset: ZerothKoreanDataset
+    ) -> ASRDataset[str, list[ZerothKoreanDiarizationLabel]]:
         if isinstance(dataset, ASRDatasetProtocol):
             return ASRDataset(dataset=dataset)
         raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
 
     @pytest.fixture
-    def asr_samples(self, asr_dataset: ASRDataset) -> list[ASRSample]:
+    def asr_samples(
+        self, asr_dataset: ASRDataset[str, list[ZerothKoreanDiarizationLabel]]
+    ) -> list[ASRSample[str, list[ZerothKoreanDiarizationLabel]]]:
         return [sample for sample in asr_dataset]
 
 

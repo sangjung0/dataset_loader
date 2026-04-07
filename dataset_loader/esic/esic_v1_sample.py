@@ -17,7 +17,7 @@ from dataset_loader.esic.constants import (
 
 
 @dataclass(frozen=True, slots=True)
-class ESICv1Sample(ASRSample):
+class ESICv1Sample(ASRSample[str, None]):
     """
     ESIC v1.1 데이터셋의 샘플을 나타내는 클래스.
     """

@@ -1,13 +1,20 @@
 from __future__ import annotations
 
-from typing import cast
+from typing import cast, TypedDict
+from typing_extensions import ReadOnly
 from dataclasses import dataclass
 
 from dataset_loader.abstract import ASRSample
 
 
+class DiarizationLabel(TypedDict):
+    start: ReadOnly[float]
+    end: ReadOnly[float]
+    speaker: ReadOnly[str]
+
+
 @dataclass(frozen=True, slots=True)
-class ZerothKoreanSample(ASRSample):
+class ZerothKoreanSample(ASRSample[str, list[DiarizationLabel]]):
     """
     Zeroth Korean 데이터셋의 샘플을 나타내는 클래스.
     """
@@ -17,4 +24,4 @@ class ZerothKoreanSample(ASRSample):
         return cast(str, self.data["text"])
 
 
-__all__ = ["ZerothKoreanSample"]
+__all__ = ["ZerothKoreanSample", "DiarizationLabel"]

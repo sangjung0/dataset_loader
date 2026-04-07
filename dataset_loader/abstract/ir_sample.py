@@ -3,31 +3,37 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any
-from typing_extensions import Self
+from typing import Any, TypeVar, TypedDict, Generic, cast
+from typing_extensions import Self, ReadOnly
 from dataclasses import dataclass
 from collections.abc import Mapping, Callable
 
 from dataset_loader.base.sample import Sample
 
 
+LabelT = TypeVar("LabelT", covariant=True)
+
+
+class IRSampleData(TypedDict, Generic[LabelT]):
+    load_raw: ReadOnly[Callable[[], npt.NDArray[np.uint8]]]
+    label: ReadOnly[LabelT]
+
+
 @dataclass(frozen=True, slots=True)
-class IRSample(Sample):
+class IRSample(Sample, Generic[LabelT]):
     @property
     def raw(self) -> npt.NDArray[np.uint8]:
         if "load_raw" not in self.data:
             raise AttributeError("Raw image data is not available in this sample")
-        image: npt.NDArray[np.uint8] = self.data["load_raw"]()
-        return image
+        return cast(npt.NDArray[np.uint8], self.data["load_raw"]())
 
     @property
-    def label(self) -> str | dict[str, Any] | list[Any]:
+    def label(self) -> LabelT:
         if "label" not in self.data:
             raise AttributeError("Label is not available in this sample")
-        label: str | dict[str, Any] | list[Any] = self.data["label"]
-        return label
+        return cast(LabelT, self.data["label"])
 
-    def loaded_ir_sample(self) -> IRSample:
+    def loaded_ir_sample(self) -> IRSample[LabelT]:
         data = {**self.data}
         raw = self.raw
         data["load_raw"] = lambda: raw
@@ -40,7 +46,7 @@ class IRSample(Sample):
         *,
         load_raw: Callable[[], npt.NDArray[np.uint8]] | None = None,
         raw: npt.NDArray[np.uint8] | None = None,
-        label: str | dict[str, Any] | list[Any] | None = None,
+        label: Any = None,
         data: Mapping[str, Any] | None = None,
     ) -> Self:
         if data is None:
@@ -67,4 +73,4 @@ class IRSample(Sample):
         return f"IRSample(id={self.id}, label={self.label})"
 
 
-__all__ = ["IRSample"]
+__all__ = ["IRSample", "IRSampleData"]

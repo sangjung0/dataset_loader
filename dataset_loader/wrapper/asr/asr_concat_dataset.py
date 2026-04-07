@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar, cast
 from typing_extensions import override
 from collections.abc import MutableSequence
 
@@ -10,15 +10,21 @@ from dataset_loader.abstract import ASRSample
 from dataset_loader.wrapper.asr.protocol import ASRDatasetProtocol
 from dataset_loader.wrapper.asr.asr_dataset_mixin import ASRDatasetMixin
 
+RefT = TypeVar("RefT")
+DiarizationT = TypeVar("DiarizationT")
 
-class ASRConcatDataset(
-    ASRDatasetMixin[ConcatDatasetProtocol[ASRDatasetProtocol, ASRSample]]
-):
+
+class ASRConcatDataset(ASRDatasetMixin[RefT, DiarizationT]):
     """
     ASRDataset을 연결하여 새로운 ASRDataset을 만드는 클래스이다.
     """
 
-    def __init__(self, dataset: ConcatDatasetProtocol[ASRDatasetProtocol, ASRSample]):
+    def __init__(
+        self,
+        dataset: ConcatDatasetProtocol[
+            ASRDatasetProtocol, ASRSample[RefT, DiarizationT]
+        ],
+    ) -> None:
         for ds in dataset.dataset:
             if not isinstance(ds, ASRDatasetProtocol):
                 raise TypeError(
@@ -26,6 +32,16 @@ class ASRConcatDataset(
                 )
 
         super().__init__(dataset=dataset)
+
+    @property
+    @override
+    def dataset(
+        self,
+    ) -> ConcatDatasetProtocol[ASRDatasetProtocol, ASRSample[RefT, DiarizationT]]:
+        return cast(
+            ConcatDatasetProtocol[ASRDatasetProtocol, ASRSample[RefT, DiarizationT]],
+            super().dataset,
+        )
 
     @property
     def sr(self) -> int:
@@ -41,7 +57,7 @@ class ASRConcatDataset(
         return self.dataset.names
 
     @override
-    def concat(self, other: DatasetProtocol[Any, Any]) -> ASRConcatDataset:
+    def concat(self, other: DatasetProtocol[Any, Any]) -> ASRConcatDataset[Any, Any]:
         from dataset_loader.wrapper.asr.asr_concat_dataset import ASRConcatDataset
         from dataset_loader.wrapper.asr.asr_dataset import ASRDataset
 

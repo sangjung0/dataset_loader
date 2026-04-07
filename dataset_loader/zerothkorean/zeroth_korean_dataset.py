@@ -59,7 +59,7 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
                 {
                     "start": 0,
                     "end": -1,  # NOTE 임시 값
-                    "label": data["speaker_id"],
+                    "speaker": data["speaker_id"],
                 }
             ],
         }

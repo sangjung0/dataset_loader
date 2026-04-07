@@ -8,7 +8,7 @@ from dataset_loader.abstract import ASRSample
 
 
 @dataclass(frozen=True, slots=True)
-class TedliumSample(ASRSample):
+class TedliumSample(ASRSample[str, str]):
     """
     TED-LIUM 데이터셋의 샘플을 나타내는 클래스.
     """

@@ -5,9 +5,11 @@ from typing_extensions import Self
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
+from dataset_loader.protocol import SampleProtocol
+
 
 @dataclass(frozen=True, slots=True)
-class Sample:  # SampleProtocol
+class Sample(SampleProtocol):
     """
     Dataset에서 데이터를 가져올 때 반환되는 객체를 나타내는 클래스이다.
     각 샘플은 고유한 id와 데이터가 포함된 딕셔너리를 가진다.
