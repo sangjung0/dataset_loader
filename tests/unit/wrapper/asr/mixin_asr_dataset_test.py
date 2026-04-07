@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TypeVar, Generic
+
 from dataset_loader.abstract import ASRSample
 from dataset_loader.wrapper.asr import ASRDataset, ASRConcatDataset
 
@@ -8,12 +10,16 @@ from tests.unit.protocol import MixinDatasetProtocolTest
 THREAD_ITER_TEST_SIZE = 20
 
 
-class MixinASRDatasetTest(MixinDatasetProtocolTest):
+RefT = TypeVar("RefT")
+DiarizationT = TypeVar("DiarizationT")
+
+
+class MixinASRDatasetTest(MixinDatasetProtocolTest, Generic[RefT, DiarizationT]):
     """
     Need: asr_dataset, samples
     """
 
-    def test_asr_sample_rate(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_sample_rate(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         assert isinstance(asr_dataset.sr, int)
         assert asr_dataset.sr > 0
 
@@ -33,7 +39,7 @@ class MixinASRDatasetTest(MixinDatasetProtocolTest):
 
         assert abs(dur - changed_dur) < 1e-3
 
-    def test_asr_thread_iter(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_thread_iter(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         for idx, sample in enumerate(
             asr_dataset.thread_iter(num_workers=2, prefetch=4)
         ):
@@ -45,50 +51,64 @@ class MixinASRDatasetTest(MixinDatasetProtocolTest):
                 break
 
     def test_asr__len__(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert__len__(asr_dataset, asr_samples)
 
     def test_asr__iter__(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert__iter__(asr_dataset, asr_samples)
 
     def test_asr__getitem__(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert__getitem__(asr_dataset, asr_samples)
 
-    def test_asr_select(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_select(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         type(self).assert_select(asr_dataset)
 
-    def test_asr_slice(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_slice(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         type(self).assert_slice(asr_dataset)
 
     def test_asr_sample(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert_sample(asr_dataset, asr_samples)
 
-    def test_asr_get(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_get(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         type(self).assert_get(asr_dataset)
 
-    def test_asr__add__(self, asr_dataset: ASRDataset) -> None:
+    def test_asr__add__(self, asr_dataset: ASRDataset[RefT, DiarizationT]) -> None:
         type(self).assert__add__(asr_dataset, ASRConcatDataset)
 
     def test_asr_to_dict_and_from_dict(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert_to_dict_and_from_dict(asr_dataset, asr_samples)
 
     def test_asr_to_pointer_and_from_pointer(
-        self, asr_dataset: ASRDataset, asr_samples: list[ASRSample]
+        self,
+        asr_dataset: ASRDataset[RefT, DiarizationT],
+        asr_samples: list[ASRSample[RefT, DiarizationT]],
     ) -> None:
         type(self).assert_to_config_and_from_config(
             asr_dataset, asr_samples, ASRDataset
         )
 
-    def test_asr_sample_identity(self, asr_dataset: ASRDataset) -> None:
+    def test_asr_sample_identity(
+        self, asr_dataset: ASRDataset[RefT, DiarizationT]
+    ) -> None:
         type(self).assert_sample_identity(asr_dataset)
 
 

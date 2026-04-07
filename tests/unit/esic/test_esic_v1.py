@@ -13,7 +13,7 @@ from tests.unit.wrapper.asr import MixinASRDatasetTest
 SAMPLE_SIZE = 200
 
 
-class TestESICv1(MixinDatasetTest, MixinASRDatasetTest):
+class TestESICv1(MixinASRDatasetTest[str, None], MixinDatasetTest):
     @pytest.fixture
     def esic_v1(self) -> ESICv1:
         return ESICv1()
@@ -36,13 +36,15 @@ class TestESICv1(MixinDatasetTest, MixinASRDatasetTest):
         return [sample for sample in dataset]
 
     @pytest.fixture
-    def asr_dataset(self, dataset: ESICv1Dataset) -> ASRDataset:
+    def asr_dataset(self, dataset: ESICv1Dataset) -> ASRDataset[str, None]:
         if isinstance(dataset, ASRDatasetProtocol):
             return ASRDataset(dataset=dataset)
         raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
 
     @pytest.fixture
-    def asr_samples(self, asr_dataset: ASRDataset) -> list[ASRSample]:
+    def asr_samples(
+        self, asr_dataset: ASRDataset[str, None]
+    ) -> list[ASRSample[str, None]]:
         return [sample for sample in asr_dataset]
 
 

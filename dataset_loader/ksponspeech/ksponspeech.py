@@ -8,7 +8,7 @@ from datasets import Dataset, IterableDatasetDict
 
 from dataset_loader.abstract import HuggingfaceLoader
 
-from dataset_loader.ksponspeech.ksponspeech_dataset import KSPonSpeechDataset
+from dataset_loader.ksponspeech.ksponspeech_dataset import KSponSpeechDataset
 from dataset_loader.ksponspeech.constants import (
     DEFAULT_CONFIG_NAME,
     DEFAULT_REPO_ID,
@@ -16,7 +16,7 @@ from dataset_loader.ksponspeech.constants import (
 )
 
 
-class KSPonSpeech(HuggingfaceLoader):
+class KSponSpeech(HuggingfaceLoader):
     def __init__(
         self,
         *,
@@ -49,33 +49,33 @@ class KSPonSpeech(HuggingfaceLoader):
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
         **kwargs: Any,
-    ) -> KSPonSpeechDataset:
+    ) -> KSponSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="train", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
-        return KSPonSpeechDataset(dataset=dataset, sr=sr)
+            return KSponSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
+        return KSponSpeechDataset(dataset=dataset, sr=sr)
 
     def valid(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
         **kwargs: Any,
-    ) -> KSPonSpeechDataset:
+    ) -> KSponSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="valid", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
-        return KSPonSpeechDataset(dataset=dataset, sr=sr)
+            return KSponSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
+        return KSponSpeechDataset(dataset=dataset, sr=sr)
 
     def test(
         self,
         config_name: str = DEFAULT_CONFIG_NAME,
         sr: int = DEFAULT_SAMPLE_RATE,
         **kwargs: Any,
-    ) -> KSPonSpeechDataset:
+    ) -> KSponSpeechDataset:
         dataset = self.load(config_name=config_name, split_name="test", **kwargs)
         if isinstance(dataset, (IterableDatasetDict, list)):
-            return KSPonSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
-        return KSPonSpeechDataset(dataset=dataset, sr=sr)
+            return KSponSpeechDataset(dataset=dataset[0], sr=sr)  # type: ignore[return-value, unused-ignore]
+        return KSponSpeechDataset(dataset=dataset, sr=sr)
 
 
-__all__ = ["KSPonSpeech"]
+__all__ = ["KSponSpeech"]

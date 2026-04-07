@@ -13,7 +13,7 @@ from tests.unit.wrapper.asr import MixinASRDatasetTest
 SAMPLE_SIZE = 200
 
 
-class TestLibriSpeech(MixinASRDatasetTest, MixinDatasetTest):
+class TestLibriSpeech(MixinASRDatasetTest[str, None], MixinDatasetTest):
     @pytest.fixture
     def librispeech(self) -> LibriSpeech:
         return LibriSpeech()
@@ -42,13 +42,15 @@ class TestLibriSpeech(MixinASRDatasetTest, MixinDatasetTest):
         return [sample for sample in dataset]
 
     @pytest.fixture
-    def asr_dataset(self, dataset: LibriSpeechDataset) -> ASRDataset:
+    def asr_dataset(self, dataset: LibriSpeechDataset) -> ASRDataset[str, None]:
         if isinstance(dataset, ASRDatasetProtocol):
             return ASRDataset(dataset=dataset)
         raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
 
     @pytest.fixture
-    def asr_samples(self, asr_dataset: ASRDataset) -> list[ASRSample]:
+    def asr_samples(
+        self, asr_dataset: ASRDataset[str, None]
+    ) -> list[ASRSample[str, None]]:
         return [sample for sample in asr_dataset]
 
 

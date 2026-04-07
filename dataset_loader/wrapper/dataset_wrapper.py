@@ -7,17 +7,12 @@ from typing import Any, overload, TypeVar, cast
 from typing_extensions import Self, override
 from collections.abc import Mapping, Generator, Iterable
 
-from dataset_loader.protocol import (
-    DatasetProtocol,
-    SampleProtocol,
-    ConcatDatasetProtocol,
-)
+from dataset_loader.protocol import DatasetProtocol, SampleProtocol
 
 S = TypeVar("S", bound=SampleProtocol)
-D = TypeVar("D", bound=DatasetProtocol[Any, Any])
 
 
-class DatasetWrapper(DatasetProtocol[D, S], ABC):
+class DatasetWrapper(DatasetProtocol[DatasetProtocol[Any, S], S], ABC):
     """
     Dataset의 래핑 클래스이다. \n
     다양한 도메인에 대해서 대응하기 위한 인터페이스를 제공한다.
@@ -29,12 +24,12 @@ class DatasetWrapper(DatasetProtocol[D, S], ABC):
         name (str): Dataset의 이름
     """
 
-    def __init__(self, dataset: D):
+    def __init__(self, dataset: DatasetProtocol[Any, S]):
         self._dataset = dataset
 
     @property
     @override
-    def dataset(self) -> D:
+    def dataset(self) -> DatasetProtocol[Any, S]:
         return self._dataset
 
     @property
@@ -86,8 +81,8 @@ class DatasetWrapper(DatasetProtocol[D, S], ABC):
     def getitem(self, key: int | slice | Iterable[int]) -> S | Self:
         result = self.dataset[key]
         if isinstance(result, SampleProtocol):
-            return cast(S, result)
-        return self.__class__(dataset=cast(D, result))
+            return result
+        return self.__class__(dataset=result)
 
     @override
     def select(self, indices: Iterable[int]) -> Self:
@@ -113,21 +108,17 @@ class DatasetWrapper(DatasetProtocol[D, S], ABC):
         return self.__class__(dataset=dataset)
 
     @override
-    def __add__(
-        self, other: DatasetProtocol[Any, S]
-    ) -> DatasetWrapper[D, S] | DatasetWrapper[ConcatDatasetProtocol[D, S], S]:
+    def __add__(self, other: DatasetProtocol[Any, S]) -> DatasetWrapper[S]:
         return self.concat(other)
 
     @abstractmethod
     @override
-    def concat(
-        self, other: DatasetProtocol[Any, S]
-    ) -> DatasetWrapper[D, S] | DatasetWrapper[ConcatDatasetProtocol[D, S], S]:
+    def concat(self, other: DatasetProtocol[Any, S]) -> DatasetWrapper[S]:
         raise NotImplementedError
 
     @override
     def get(self, idx: int) -> S:
-        return cast(S, self.dataset.get(idx))
+        return self.dataset.get(idx)
 
     @override
     def clean(self) -> None:
@@ -162,7 +153,7 @@ class DatasetWrapper(DatasetProtocol[D, S], ABC):
 
     @classmethod
     @override
-    def __setstate__(cls, state: Mapping[str, Any]) -> DatasetWrapper[Any, Any]:
+    def __setstate__(cls, state: Mapping[str, Any]) -> DatasetWrapper[Any]:
         if all(k in state for k in ("module", "qualname", "type")):
             state, wrapper_cls = cls.__set_import__(state)
         else:
@@ -196,12 +187,10 @@ class DatasetWrapper(DatasetProtocol[D, S], ABC):
     @override
     def __set_import__(
         cls, import_info: Mapping[str, Any]
-    ) -> tuple[dict[str, Any], type[DatasetWrapper[Any, Any]]]:
+    ) -> tuple[dict[str, Any], type[DatasetWrapper[Any]]]:
         from sjpy.reference import import_from, ImportData
 
-        _class: type[DatasetWrapper[Any, Any]] = import_from(
-            cast(ImportData, import_info)
-        )
+        _class: type[DatasetWrapper[Any]] = import_from(cast(ImportData, import_info))
 
         if not isinstance(_class, type):
             raise TypeError(f"{_class} is not a class")

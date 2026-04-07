@@ -1,21 +1,26 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Any
+from typing import TypeVar
 from typing_extensions import override
 
 from dataset_loader.abstract import ASRSample
-from dataset_loader.protocol import DatasetProtocol
 
 from dataset_loader.wrapper.dataset_wrapper import DatasetWrapper
 from dataset_loader.wrapper.thread_loader_mixin import ThreadLoaderMixin
 
 from dataset_loader.wrapper.asr.protocol import ASRDatasetProtocol
 
-D = TypeVar("D", bound=DatasetProtocol[Any, ASRSample])
+RefT = TypeVar("RefT")
+DiarizationT = TypeVar("DiarizationT")
 
 
-class ASRDatasetMixin(DatasetWrapper[D, ASRSample], ThreadLoaderMixin[ASRSample], ASRDatasetProtocol, ABC):
+class ASRDatasetMixin(
+    DatasetWrapper[ASRSample[RefT, DiarizationT]],
+    ThreadLoaderMixin[ASRSample[RefT, DiarizationT]],
+    ASRDatasetProtocol,
+    ABC,
+):
     @property
     @abstractmethod
     def sr(self) -> int: ...
@@ -25,7 +30,9 @@ class ASRDatasetMixin(DatasetWrapper[D, ASRSample], ThreadLoaderMixin[ASRSample]
     def sr(self, value: int) -> None: ...
 
     @override
-    def _loader(self, sample: ASRSample) -> ASRSample:
+    def _loader(
+        self, sample: ASRSample[RefT, DiarizationT]
+    ) -> ASRSample[RefT, DiarizationT]:
         return sample.loaded_audio_sample()
 
 

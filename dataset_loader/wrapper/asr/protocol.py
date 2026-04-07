@@ -7,7 +7,7 @@ from dataset_loader.abstract import ASRSample
 
 
 @runtime_checkable
-class ASRDatasetProtocol(DatasetProtocol[Any, ASRSample], Protocol):
+class ASRDatasetProtocol(DatasetProtocol[Any, ASRSample[Any, Any]], Protocol):
     @property
     def sr(self) -> int: ...
 

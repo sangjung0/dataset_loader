@@ -3,38 +3,44 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any
-from typing_extensions import Self
+from typing import Any, TypeVar, TypedDict, Generic, cast
+from typing_extensions import Self, ReadOnly
 from dataclasses import dataclass
 from collections.abc import Mapping, Callable
 
 from dataset_loader.base.sample import Sample
 
+RefT = TypeVar("RefT", covariant=True)
+DiarizationT = TypeVar("DiarizationT", covariant=True)
+
+
+class ASRSampleData(TypedDict, Generic[RefT, DiarizationT]):
+    load_audio_func: ReadOnly[Callable[[], npt.NDArray[np.float32]]]
+    ref: ReadOnly[RefT]
+    diarization: ReadOnly[DiarizationT]
+
 
 @dataclass(frozen=True, slots=True)
-class ASRSample(Sample):
+class ASRSample(Sample, Generic[RefT, DiarizationT]):
     @property
     def audio(self) -> npt.NDArray[np.float32]:
         if "load_audio_func" not in self.data:
             raise AttributeError("Audio data is not available in this sample")
-        audio: npt.NDArray[np.float32] = self.data["load_audio_func"]()
-        return audio
+        return cast(npt.NDArray[np.float32], self.data["load_audio_func"]())
 
     @property
-    def ref(self) -> str:
+    def ref(self) -> RefT:
         if "ref" not in self.data:
             raise AttributeError("ASR label is not available in this sample")
-        ref: str = self.data["ref"]
-        return ref
+        return cast(RefT, self.data["ref"])
 
     @property
-    def diarization(self) -> list[dict[str, Any]]:
+    def diarization(self) -> DiarizationT:
         if "diarization" not in self.data:
             raise AttributeError("Diarization label is not available in this sample")
-        diarization: list[dict[str, Any]] = self.data["diarization"]
-        return diarization
+        return cast(DiarizationT, self.data["diarization"])
 
-    def loaded_audio_sample(self) -> ASRSample:
+    def loaded_audio_sample(self) -> ASRSample[RefT, DiarizationT]:
         data = {**self.data}
         audio = self.audio
         data["load_audio_func"] = lambda: audio
@@ -47,8 +53,8 @@ class ASRSample(Sample):
         *,
         load_audio_func: Callable[[], npt.NDArray[np.float32]] | None = None,
         audio: npt.NDArray[np.float32] | None = None,
-        ref: str | None = None,
-        diarization: list[Mapping[str, Any]] | None = None,
+        ref: Any = None,
+        diarization: Any = None,
         data: Mapping[str, Any] | None = None,
     ) -> Self:
         if data is None:
@@ -74,4 +80,4 @@ class ASRSample(Sample):
         return cls(id=id, data=data)
 
 
-__all__ = ["ASRSample"]
+__all__ = ["ASRSample", "ASRSampleData"]

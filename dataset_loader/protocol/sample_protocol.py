@@ -13,15 +13,10 @@ class SampleProtocol(Protocol):
     구현할 때는 dataset_loader.base.sample.Sample 클래스를 상속하여 구현합니다.
     """
 
-    @property
-    def id(self) -> str:
-        """샘플의 고유 식별자를 반환하는 속성입니다."""
-        ...
-
-    @property
-    def data(self) -> Mapping[str, Any]:
-        """샘플의 실제 데이터가 포함된 딕셔너리를 반환하는 속성입니다."""
-        ...
+    id: str
+    """샘플의 고유 식별자를 반환하는 속성입니다."""
+    data: Mapping[str, Any]
+    """샘플의 실제 데이터가 포함된 딕셔너리를 반환하는 속성입니다."""
 
     def to_dict(self) -> MutableMapping[str, Any]:
         """샘플을 딕셔너리로 변환하는 메서드입니다."""
