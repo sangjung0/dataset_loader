@@ -5,7 +5,7 @@ import pytest
 from dataset_loader.base import Sample
 from dataset_loader.abstract import ASRSample
 from dataset_loader.tedlium import Tedlium, TedliumDataset
-from dataset_loader.wrapper.asr import ASRDataset, ASRDatasetProtocol
+from dataset_loader.wrapper.asr import ASRDataset
 
 from tests.unit.base import MixinDatasetTest
 from tests.unit.wrapper.asr import MixinASRDatasetTest
@@ -39,9 +39,7 @@ class TestTedlium(MixinASRDatasetTest[str, str], MixinDatasetTest):
 
     @pytest.fixture
     def asr_dataset(self, dataset: TedliumDataset) -> ASRDataset[str, str]:
-        if isinstance(dataset, ASRDatasetProtocol):
-            return ASRDataset(dataset=dataset)
-        raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
+        return ASRDataset(dataset=dataset)
 
     @pytest.fixture
     def asr_samples(

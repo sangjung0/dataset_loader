@@ -37,7 +37,7 @@ class IRSample(Sample, Generic[LabelT]):
         data = {**self.data}
         raw = self.raw
         data["load_raw"] = lambda: raw
-        return IRSample.create(id=self.id, data=data)
+        return IRSample[LabelT].create(id=self.id, data=data)
 
     @classmethod
     def create(

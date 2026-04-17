@@ -6,12 +6,10 @@ from dataset_loader import (
     Sample,
     ASRSample,
     ASRDataset,
-    ASRDatasetProtocol,
     ZerothKorean,
     ZerothKoreanDataset,
     ZerothKoreanDiarizationLabel,
 )
-from dataset_loader.wrapper.asr import ASRDataset, ASRDatasetProtocol
 
 from tests.unit.base import MixinDatasetTest
 from tests.unit.wrapper.asr import MixinASRDatasetTest
@@ -50,9 +48,7 @@ class TestZerothKorean(
     def asr_dataset(
         self, dataset: ZerothKoreanDataset
     ) -> ASRDataset[str, list[ZerothKoreanDiarizationLabel]]:
-        if isinstance(dataset, ASRDatasetProtocol):
-            return ASRDataset(dataset=dataset)
-        raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
+        return ASRDataset(dataset=dataset)
 
     @pytest.fixture
     def asr_samples(

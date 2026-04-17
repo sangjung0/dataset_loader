@@ -44,7 +44,7 @@ class ASRSample(Sample, Generic[RefT, DiarizationT]):
         data = {**self.data}
         audio = self.audio
         data["load_audio_func"] = lambda: audio
-        return ASRSample.create(id=self.id, data=data)
+        return ASRSample[RefT, DiarizationT].create(id=self.id, data=data)
 
     @classmethod
     def create(

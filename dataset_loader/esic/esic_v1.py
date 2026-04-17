@@ -88,7 +88,7 @@ class ESICv1(ParquetLoader):
     @override
     def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
-        data["mp4_path"] = data["mp4_path"].apply(lambda x: self.path / x)
+        data["mp4_path"] = data["mp4_path"].apply(lambda x: self.path / x)  # type: ignore[unused-ignore]
         return data
 
     @override

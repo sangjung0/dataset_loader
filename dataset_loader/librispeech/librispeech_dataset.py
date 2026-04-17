@@ -34,10 +34,9 @@ class LibriSpeechDataset(ParquetDataset[LibriSpeechSample]):
 
     @sr.setter
     def sr(self: LibriSpeechDataset, value: int) -> None:
-        if isinstance(value, int) and value > 0:
-            self._sr = value
-        else:
+        if value <= 0:
             raise ValueError("Sample rate must be a positive integer")
+        self._sr = value
 
     @override
     def get(self: LibriSpeechDataset, idx: int) -> LibriSpeechSample:
@@ -51,7 +50,7 @@ class LibriSpeechDataset(ParquetDataset[LibriSpeechSample]):
             return wav.astype(np.float32)
 
         _id = data.pop("id")
-        result = {
+        result: dict[str, Any] = {
             "load_audio_func": load_audio_func,
             "ref": data["ref"],
         }

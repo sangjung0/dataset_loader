@@ -52,7 +52,7 @@ def search_dirs(source: Path, excludes: Container[str] | None = None) -> list[Pa
         raise ValueError(f"Expected a directory for source, but got a file: {source}")
     excludes = excludes or set()
 
-    data_dirs = []
+    data_dirs: list[Path] = []
     for dirpath in (p for p in source.rglob("*") if p.is_dir()):
         if str(dirpath.absolute()) in excludes:
             continue

@@ -38,10 +38,9 @@ class TedliumDataset(ParquetDataset[TedliumSample]):
 
     @sr.setter
     def sr(self, value: int) -> None:
-        if isinstance(value, int) and value > 0:
-            self._sr = value
-        else:
+        if value <= 0:
             raise ValueError("Sample rate must be a positive integer")
+        self._sr = value
 
     @override
     def get(self, idx: int) -> TedliumSample:

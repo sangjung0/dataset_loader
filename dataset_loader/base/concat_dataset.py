@@ -30,7 +30,7 @@ class ConcatDataset(Dataset[MutableSequence[D], S], ConcatDatasetProtocol[D, S])
         if len(datasets) == 0:
             raise ValueError("At least one dataset is required")
 
-        dts = []
+        dts: list[D] = []
         for dataset in datasets:
             if dataset.is_cleaned:
                 raise ValueError("Cannot concatenate a cleaned dataset")
@@ -78,7 +78,7 @@ class ConcatDataset(Dataset[MutableSequence[D], S], ConcatDatasetProtocol[D, S])
         length = len(self)
         normalized_indices = [i if i >= 0 else length + i for i in indices]
 
-        selected_datasets = []
+        selected_datasets: list[D] = []
         start = 0
         for ds in self._datasets:
             end = start + len(ds)
@@ -128,6 +128,7 @@ class ConcatDataset(Dataset[MutableSequence[D], S], ConcatDatasetProtocol[D, S])
         if self.is_cleaned:
             raise RuntimeError("Cannot concatenate a cleaned dataset")
         elif isinstance(other, ConcatDataset):
+            other = cast(ConcatDataset[Any, Any], other)  # type: ignore[redundant-cast]
             return ConcatDataset(datasets=self._datasets + other._datasets)
         elif isinstance(other, Dataset):
             return ConcatDataset(datasets=self._datasets + [other])

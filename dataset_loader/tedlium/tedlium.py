@@ -48,7 +48,7 @@ class Tedlium(ParquetLoader):
         self, *, name: TedliumSet | str, prepare_dir: str = ".prepare"
     ) -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
-        data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)
+        data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)  # type: ignore[unused-ignore]
         return data
 
     @override

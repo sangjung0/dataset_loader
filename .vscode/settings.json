@@ -1,5 +1,5 @@
 // Author: SangJeong Kim
-// Last Modified: 2026-04-01
+// Last Modified: 2026-04-17
 
 {
   "code-runner.runInTerminal": true,
@@ -37,13 +37,22 @@
     "**/output",
     "**/log",
     "**/.venv",
-    "**/.shortcuts"
+    "**/.shortcuts",
+    "**/modules"
   ],
   "python.analysis.extraPaths": ["./modules/sjpy"],
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   "python-envs.defaultEnvManager": "ms-python.python:venv",
   "python.envFile": "${workspaceFolder}/.env",
   "jupyter.notebookFileRoot": "${workspaceFolder}",
+  // :TODOS:Tree
+  "todo-tree.filtering.excludeGlobs": [
+    "**/node_modules/*/**",
+    "**/.git/*/**",
+    "**/.vscode/*/**",
+    "**/__pycache__/*/**",
+    "**/.venv/*/**"
+  ],
   // Editor
   "editor.wordWrap": "on",
   "editor.wrappingIndent": "indent",

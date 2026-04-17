@@ -1,3 +1,5 @@
+# pyright: reportMissingTypeStubs=false
+
 from __future__ import annotations
 
 import numpy as np
@@ -35,15 +37,17 @@ class HuggingfaceDataset(Dataset[DT, S], ABC):
     @property
     @override
     def length(self) -> int:
-        if self.is_cleaned or self.dataset is None:
+        if self.is_cleaned or self._dataset is None:
             raise RuntimeError("Cannot get length of a cleaned dataset")
-        return len(self.dataset)
+        return len(self._dataset)
 
     @override
     def select(self, indices: Iterable[int]) -> Self:
-        if self.is_cleaned or self.dataset is None:
+        if self.is_cleaned or self._dataset is None:
             raise RuntimeError("Cannot select from a cleaned dataset")
-        dataset = self.dataset.select(indices)
+        dataset = self._dataset.select(  # pyright: ignore[reportUnknownMemberType]
+            indices
+        )
         args = self.args
         args["dataset"] = dataset
         return type(self)(**args)
@@ -52,9 +56,9 @@ class HuggingfaceDataset(Dataset[DT, S], ABC):
     def slice(
         self, start: int | None = None, stop: int | None = None, step: int | None = None
     ) -> Self:
-        if self.is_cleaned or self.dataset is None:
+        if self.is_cleaned or self._dataset is None:
             raise RuntimeError("Cannot slice a cleaned dataset")
-        return self.select(range(len(self.dataset))[start:stop:step])
+        return self.select(range(len(self._dataset))[start:stop:step])
 
     @override
     def _sample(
@@ -64,12 +68,12 @@ class HuggingfaceDataset(Dataset[DT, S], ABC):
         *,
         rng: np.random.Generator | np.random.RandomState | None = None,
     ) -> Self:
-        if self.is_cleaned or self.dataset is None:
+        if self.is_cleaned or self._dataset is None:
             raise RuntimeError("Cannot sample from a cleaned dataset")
-        elif rng is None or size == len(self) - start:
+        elif rng is None or size == len(self._dataset) - start:
             return self.slice(start, start + size)
         else:
-            indices = range(len(self))[start:]
+            indices = range(len(self._dataset))[start:]
             index = rng.choice(indices, size=size, replace=False)
             return self.select(list(index))
 
@@ -82,17 +86,21 @@ class HuggingfaceDataset(Dataset[DT, S], ABC):
 
     @override
     def to_dict(self: Self) -> dict[str, Any]:
-        if self.is_cleaned or self.dataset is None:
+        if self.is_cleaned or self._dataset is None:
             raise RuntimeError("Cannot serialize a cleaned dataset")
         args = self.args
-        args["dataset"] = self.dataset.to_dict()
+        args["dataset"] = (
+            self._dataset.to_dict()  # pyright: ignore[reportUnknownMemberType]
+        )
         return args
 
     @classmethod
     @override
     def from_dict(cls, data: Mapping[str, Any]) -> Self:
         data = {**data}
-        data["dataset"] = DT.from_dict(data["dataset"])
+        data["dataset"] = DT.from_dict(  # pyright: ignore[reportUnknownMemberType]
+            data["dataset"]
+        )
         return cls(**data)
 
     @classmethod

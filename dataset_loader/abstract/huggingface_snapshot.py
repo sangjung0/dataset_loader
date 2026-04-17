@@ -1,3 +1,5 @@
+# pyright: reportMissingTypeStubs=false, reportUnknownVariableType=false
+
 from __future__ import annotations
 
 from typing import Any
@@ -61,7 +63,7 @@ class HuggingfaceSnapshot(DatasetLoader):
                 **load_options,
             }
 
-        dataset:Dataset = load_dataset(**load_options)[name]
+        dataset: Dataset = load_dataset(**load_options)[name]
         return dataset
 
 
