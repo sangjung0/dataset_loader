@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any, TypeVar, TypedDict, Generic, cast
-from typing_extensions import Self, ReadOnly
+from typing import Any, TypeVar, Generic, cast
+from typing_extensions import Self, ReadOnly, TypedDict
 from dataclasses import dataclass
 from collections.abc import Mapping, Callable
 
