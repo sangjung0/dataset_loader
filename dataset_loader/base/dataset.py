@@ -88,9 +88,9 @@ class Dataset(DatasetProtocol[T, S], ABC):
             raise RuntimeError("Cannot access a cleaned dataset")
         elif isinstance(key, slice):
             return self.slice(start=key.start, stop=key.stop, step=key.step)
-        elif isinstance(key, Iterable):
+        elif isinstance(key, Iterable) and not isinstance(key, (str, bytes)):
             return self.select(key)
-        elif isinstance(key, int):
+        elif isinstance(key, int) and not isinstance(key, bool):
             n = len(self)
             if key < 0:
                 key += n
@@ -155,7 +155,8 @@ class Dataset(DatasetProtocol[T, S], ABC):
         from dataset_loader.base.concat_dataset import ConcatDataset
 
         if isinstance(other, ConcatDataset):
-            return ConcatDataset(datasets=[self] + other._datasets)
+            other = cast(ConcatDataset[Any, Any], other)  # type: ignore[redundant-cast]
+            return ConcatDataset(datasets=[self] + other.dataset)
         elif isinstance(other, Dataset):
             return ConcatDataset(datasets=[self, other])
         else:
@@ -204,9 +205,7 @@ class Dataset(DatasetProtocol[T, S], ABC):
         else:
             raise ValueError("Invalid config data: missing module, qualname, or type")
 
-        if not issubclass(dataset_cls, Dataset):
-            raise TypeError(f"{dataset_cls} is not a subclass of Dataset")
-        elif dataset_cls == Dataset[T, S]:
+        if dataset_cls == Dataset[T, S]:
             raise TypeError("Cannot instantiate Dataset directly")
 
         return dataset_cls.from_dict(state)
@@ -226,11 +225,12 @@ class Dataset(DatasetProtocol[T, S], ABC):
     def __set_import__(
         cls, import_info: Mapping[str, Any]
     ) -> tuple[dict[str, Any], type[Dataset[T, S]]]:
+        import inspect
         from sjpy.reference import import_from, ImportData
 
-        _class: type[Dataset[T, S]] = import_from(cast(ImportData, import_info))
+        _class = import_from(cast(ImportData, import_info))
 
-        if not isinstance(_class, type):
+        if not inspect.isclass(_class):
             raise TypeError(f"{_class} is not a class")
         elif not issubclass(_class, Dataset):
             raise TypeError(f"{_class} is not a subclass of Dataset or DatasetWrapper")
@@ -244,7 +244,7 @@ class Dataset(DatasetProtocol[T, S], ABC):
             for k, v in import_info.items()
             if k not in ("module", "qualname", "type")
         }
-        return d, _class
+        return d, cast(type[Dataset[T, S]], _class)
 
 
 __all__ = ["Dataset"]

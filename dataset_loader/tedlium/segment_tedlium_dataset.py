@@ -1,9 +1,11 @@
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false
+
 from __future__ import annotations
 
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any
+from typing import Any, cast
 from typing_extensions import override
 from collections.abc import Sequence
 from datasets import Dataset, Audio
@@ -44,7 +46,7 @@ class SegmentTedliumDataset(HuggingfaceDataset[SegmentTedliumSample]):
             raise RuntimeError("Cannot change sample rate of a cleaned dataset")
         elif value == self._sr:
             return
-        elif not (isinstance(value, int) and value > 0):
+        elif value <= 0:
             raise ValueError("Sample rate must be a positive integer")
         self._sr = value
         self._cast_audio(value)
@@ -58,7 +60,7 @@ class SegmentTedliumDataset(HuggingfaceDataset[SegmentTedliumSample]):
     def get(self, idx: int) -> SegmentTedliumSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
-        data = self.dataset[idx]
+        data = cast(dict[str, Any], self.dataset[idx])
 
         def load_audio_func() -> npt.NDArray[np.float32]:
             samples = data["audio"].get_all_samples()
@@ -70,7 +72,7 @@ class SegmentTedliumDataset(HuggingfaceDataset[SegmentTedliumSample]):
             text = ""
 
         infos = data["id"].split("-")
-        result = {
+        result: dict[str, Any] = {
             "original_id": data["id"],
             "load_audio_func": load_audio_func,
             "file": data["file"],

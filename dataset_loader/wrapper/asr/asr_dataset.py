@@ -40,6 +40,7 @@ class ASRDataset(ASRDatasetMixin[RefT, DiarizationT]):
 
         # ASRConcatDataset인 경우
         if isinstance(other, ASRConcatDataset):
+            other = cast(ASRConcatDataset[Any, Any], other)  # type: ignore[redundant-cast]
             return ASRConcatDataset(other.dataset + self.dataset)
         # ASRDataset인 경우
         if isinstance(other, ASRDataset):

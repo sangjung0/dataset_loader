@@ -6,7 +6,7 @@ from tqdm import tqdm
 from pathlib import Path
 from typing import Literal, overload
 from typing_extensions import override
-from collections.abc import Sequence, Mapping
+from collections.abc import Mapping
 
 from dataset_loader.abstract import ParquetLoader
 
@@ -74,7 +74,7 @@ class LibriSpeech(ParquetLoader):
             return self.download(
                 name=list(self._download_urls.keys()), url=url, verbose=verbose
             )
-        elif isinstance(name, Sequence) and not isinstance(name, str):
+        elif not isinstance(name, str):
             if url is None:
                 return [self.download(name=n, verbose=verbose) for n in name]
             elif isinstance(url, Mapping):
@@ -116,7 +116,7 @@ class LibriSpeech(ParquetLoader):
     @override
     def load(self, *, name: str, prepare_dir: str = ".prepare") -> pd.DataFrame:
         data = super().load(name=name, prepare_dir=prepare_dir)
-        data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)
+        data["audio_path"] = data["audio_path"].apply(lambda x: self.path / x)  # type: ignore[unused-ignore]
         return data
 
     @override

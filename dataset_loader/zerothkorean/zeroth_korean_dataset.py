@@ -1,3 +1,5 @@
+# pyright: reportMissingTypeStubs=false
+
 from __future__ import annotations
 
 import re
@@ -5,7 +7,7 @@ import librosa
 import numpy as np
 import numpy.typing as npt
 
-from typing import Any
+from typing import Any, cast
 from typing_extensions import override
 from datasets import Dataset
 from pathvalidate import sanitize_filepath
@@ -37,7 +39,7 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
 
     @sr.setter
     def sr(self, value: int) -> None:
-        if not (isinstance(value, int) and value > 0):
+        if value <= 0:
             raise ValueError("Sample rate must be a positive integer")
         self._sr = value
 
@@ -45,13 +47,13 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
     def get(self, idx: int) -> ZerothKoreanSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
-        data = self.dataset[idx]
+        data = cast(dict[str, Any], self.dataset[idx])
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:
             return self._resample_audio(data["audio"]["array"]).astype(np.float32)
 
-        result = {
+        result: dict[str, Any] = {
             "load_audio_func": load_audio,
             "ref": re.sub(r"\s+", " ", data["text"]).strip(),
             "text": data["text"],

@@ -159,9 +159,7 @@ class DatasetWrapper(DatasetProtocol[DatasetProtocol[Any, S], S], ABC):
         else:
             raise ValueError("Invalid pointer data: missing module, qualname, or type")
 
-        if not issubclass(wrapper_cls, DatasetWrapper):
-            raise TypeError(f"{wrapper_cls} is not a subclass of DatasetWrapper")
-        elif wrapper_cls == DatasetWrapper:
+        if wrapper_cls == DatasetWrapper:
             raise TypeError("Cannot instantiate DatasetWrapper directly")
         elif cls != DatasetWrapper and wrapper_cls != cls:
             raise TypeError(
@@ -188,11 +186,12 @@ class DatasetWrapper(DatasetProtocol[DatasetProtocol[Any, S], S], ABC):
     def __set_import__(
         cls, import_info: Mapping[str, Any]
     ) -> tuple[dict[str, Any], type[DatasetWrapper[Any]]]:
+        import inspect
         from sjpy.reference import import_from, ImportData
 
-        _class: type[DatasetWrapper[Any]] = import_from(cast(ImportData, import_info))
+        _class = import_from(cast(ImportData, import_info))
 
-        if not isinstance(_class, type):
+        if not inspect.isclass(_class):
             raise TypeError(f"{_class} is not a class")
         elif not issubclass(_class, DatasetWrapper):
             raise TypeError(f"{_class} is not a subclass of DatasetWrapper")
@@ -206,7 +205,7 @@ class DatasetWrapper(DatasetProtocol[DatasetProtocol[Any, S], S], ABC):
             for k, v in import_info.items()
             if k not in ("module", "qualname", "type")
         }
-        return state, _class
+        return state, cast(type[DatasetWrapper[Any]], _class)  # type: ignore[redundant-cast]
 
 
 __all__ = ["DatasetWrapper"]

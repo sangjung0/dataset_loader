@@ -18,7 +18,7 @@ def get_file_hash(file: Path) -> str:
 
 def parse_ctl_hashes(ctl_file: Path) -> dict[str, str]:
     readlines = ctl_file.read_text().splitlines()
-    hashes = {}
+    hashes: dict[str, str] = {}
     for line in readlines:
         if line := line.strip():
             hash, filename = line.split()
@@ -42,7 +42,7 @@ def parse_files(
             f"Number of .sph files ({len(sph_files)}) does not match number of .stm files ({len(stm_files)})"
         )
 
-    data = []
+    data: list[dict[str, Any]] = []
     for sph_file in tqdm(sph_files, desc="Parsing files", disable=not verbose):
         stm_file = stm_dir / (sph_file.stem + ".stm")
         if not stm_file.exists():
@@ -57,7 +57,9 @@ def parse_files(
 
         readlines = stm_file.read_text().splitlines()
         splitlines = [line.split(maxsplit=6) for line in readlines]
-        file_ids, channel_ids, speaker_ids = set(), set(), set()
+        file_ids: set[str] = set()
+        channel_ids: set[str] = set()
+        speaker_ids: set[str] = set()
         refs: list[dict[str, Any]] = []
         for splitline in splitlines:
             if len(splitline) < 7:

@@ -1,3 +1,5 @@
+# pyright: reportUnnecessaryIsInstance=false
+
 from __future__ import annotations
 
 from typing import Any, TypeVar, cast
@@ -45,11 +47,11 @@ class ASRConcatDataset(ASRDatasetMixin[RefT, DiarizationT]):
 
     @property
     def sr(self) -> int:
-        return self.dataset._datasets[0].sr
+        return self.dataset.dataset[0].sr
 
     @sr.setter
     def sr(self, value: int) -> None:
-        for dataset in self.dataset._datasets:
+        for dataset in self.dataset.dataset:
             dataset.sr = value
 
     @property
@@ -63,6 +65,7 @@ class ASRConcatDataset(ASRDatasetMixin[RefT, DiarizationT]):
 
         # ASRDataset 또는 ASRConcatDataset인 경우
         if isinstance(other, (ASRDataset, ASRConcatDataset)):
+            other = cast(ASRDatasetProtocol, other)
             return ASRConcatDataset(self.dataset + other.dataset)
         # Dataset이면서 ASRDatasetProtocol을 만족하는 경우
         if isinstance(other, ASRDatasetProtocol):

@@ -1,6 +1,8 @@
+# pyright: reportUnnecessaryIsInstance=false
+
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from typing_extensions import override
 
 from dataset_loader.protocol import DatasetProtocol
@@ -20,6 +22,7 @@ class IRDataset(
     def concat(self, other: DatasetProtocol[Any, IRSample[Any]]) -> IRDataset[Any]:
         # IRDataset인 경우
         if isinstance(other, IRDataset):
+            other = cast(IRDataset[Any], other)  # type: ignore[redundant-cast]
             return IRDataset(dataset=self.dataset + other.dataset)
         # DatasetProtocol인 경우
         elif isinstance(other, DatasetProtocol):

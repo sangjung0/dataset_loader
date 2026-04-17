@@ -1,3 +1,5 @@
+# pyright: reportMissingTypeStubs=false, reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownLambdaType=false
+
 from __future__ import annotations
 
 import re
@@ -44,7 +46,7 @@ class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
             raise RuntimeError("Cannot change sample rate of a cleaned dataset")
         elif value == self._sr:
             return
-        elif not (isinstance(value, int) and value > 0):
+        elif value <= 0:
             raise ValueError("Sample rate must be a positive integer")
 
         self._sr = value
@@ -59,7 +61,7 @@ class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
     def get(self, idx: int) -> KSponSpeechSample:
         if self.is_cleaned:
             raise RuntimeError("Cannot get sample from a cleaned dataset")
-        data = self.dataset[idx]
+        data: dict[str, Any] = self.dataset[idx]
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:
@@ -74,7 +76,7 @@ class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
             )
             return audio
 
-        result = {
+        result: dict[str, Any] = {
             "load_audio_func": load_audio,
             "ref": re.sub(r"\s+", " ", data["transcripts"]),
         }

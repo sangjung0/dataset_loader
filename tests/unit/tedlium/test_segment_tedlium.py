@@ -9,7 +9,6 @@ from dataset_loader import (
     SegmentTedliumDataset,
     SegmentTedliumDiarizationLabel,
     ASRDataset,
-    ASRDatasetProtocol,
 )
 
 from tests.unit.base import MixinDatasetTest
@@ -50,9 +49,7 @@ class TestSegmentTedlium(
     def asr_dataset(
         self, dataset: SegmentTedliumDataset
     ) -> ASRDataset[str, list[SegmentTedliumDiarizationLabel]]:
-        if isinstance(dataset, ASRDatasetProtocol):
-            return ASRDataset(dataset=dataset)
-        raise TypeError("Dataset must be an instance of ASRDatasetProtocol")
+        return ASRDataset(dataset=dataset)
 
     @pytest.fixture
     def asr_samples(
