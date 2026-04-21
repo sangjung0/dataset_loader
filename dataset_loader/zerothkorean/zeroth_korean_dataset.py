@@ -1,15 +1,14 @@
-# pyright: reportMissingTypeStubs=false
+# pyright: reportMissingTypeStubs=false, reportUnknownMemberType=false
 
 from __future__ import annotations
 
 import re
-import librosa
 import numpy as np
 import numpy.typing as npt
 
 from typing import Any, cast
 from typing_extensions import override
-from datasets import Dataset
+from datasets import Dataset, Audio
 from pathvalidate import sanitize_filepath
 
 from dataset_loader.abstract import HuggingfaceDataset
@@ -21,7 +20,7 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
     def __init__(self, *, dataset: Dataset, sr: int):
         super().__init__(dataset=dataset)
         self._sr = sr
-        self._original_sr = sr
+        self._cast_audio(sr)
 
     @property
     @override
@@ -39,9 +38,14 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
 
     @sr.setter
     def sr(self, value: int) -> None:
-        if value <= 0:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot change sample rate of a cleaned dataset")
+        elif value == self._sr:
+            return
+        elif value <= 0:
             raise ValueError("Sample rate must be a positive integer")
         self._sr = value
+        self._cast_audio(value)
 
     @override
     def get(self, idx: int) -> ZerothKoreanSample:
@@ -51,7 +55,7 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:
-            return self._resample_audio(data["audio"]["array"]).astype(np.float32)
+            return data["audio"]["array"]
 
         result: dict[str, Any] = {
             "load_audio_func": load_audio,
@@ -67,14 +71,10 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
         }
         return ZerothKoreanSample(id=_id, data=result)
 
-    def _resample_audio(
-        self, audio: npt.NDArray[np.float32]
-    ) -> npt.NDArray[np.float32]:
-        if self._sr != self._original_sr:
-            audio = librosa.resample(
-                audio, orig_sr=self._original_sr, target_sr=self._sr
-            )
-        return audio.astype(np.float32)
+    def _cast_audio(self, sr: int) -> None:
+        if self.is_cleaned:
+            raise RuntimeError("Cannot change sample rate of a cleaned dataset")
+        self._dataset = self.dataset.cast_column("audio", Audio(sampling_rate=sr))
 
 
 __all__ = ["ZerothKoreanDataset"]
