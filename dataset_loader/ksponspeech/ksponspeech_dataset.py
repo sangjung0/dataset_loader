@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import numpy as np
 import numpy.typing as npt
 
@@ -14,6 +13,7 @@ from datasets import Dataset, Audio
 from dataset_loader.abstract import HuggingfaceDataset
 
 from dataset_loader.ksponspeech.ksponspeech_sample import KSponSpeechSample
+from dataset_loader.ksponspeech.preprocess import bracket_filter, special_filter
 
 
 class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
@@ -76,9 +76,20 @@ class KSponSpeechDataset(HuggingfaceDataset[KSponSpeechSample]):
             )
             return audio
 
+        transcript: str = data["transcripts"]
+        spelling: str = special_filter(
+            bracket_filter(transcript, mode="spelling"), mode="spelling"
+        )
+        phonetic: str = special_filter(
+            bracket_filter(transcript, mode="phonetic"), mode="phonetic"
+        )
+
         result: dict[str, Any] = {
             "load_audio_func": load_audio,
-            "ref": re.sub(r"\s+", " ", data["transcripts"]),
+            "ref": spelling,
+            "raw": transcript,
+            "phonetic": phonetic,
+            "spelling": spelling,
         }
 
         return KSponSpeechSample(id=_id, data=result)

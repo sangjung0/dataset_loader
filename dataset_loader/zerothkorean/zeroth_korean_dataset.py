@@ -55,7 +55,7 @@ class ZerothKoreanDataset(HuggingfaceDataset[ZerothKoreanSample]):
         _id = sanitize_filepath(data["path"])[-255:]
 
         def load_audio() -> npt.NDArray[np.float32]:
-            return data["audio"]["array"]
+            return data["audio"]["array"]  # type: ignore[no-any-return]
 
         result: dict[str, Any] = {
             "load_audio_func": load_audio,

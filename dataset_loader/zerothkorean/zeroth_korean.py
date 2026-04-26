@@ -8,6 +8,8 @@ from typing_extensions import override
 from collections.abc import Sequence
 from datasets import Dataset, IterableDatasetDict
 
+from sjpy.decorator import requires_versions
+
 from dataset_loader.abstract import HuggingfaceLoader
 
 from dataset_loader.zerothkorean.zeroth_korean_dataset import ZerothKoreanDataset
@@ -18,6 +20,23 @@ from dataset_loader.zerothkorean.constants import (
 )
 
 
+@requires_versions(
+    {
+        "package_name": "torch",
+        "allowed": "==2.9.0",
+        "action": "warn",
+    },
+    {
+        "package_name": "torchaudio",
+        "allowed": "==2.9.0",
+        "action": "warn",
+    },
+    {
+        "package_name": "torchcodec",
+        "allowed": "==0.8.0",
+        "action": "warn",
+    },
+)
 class ZerothKorean(HuggingfaceLoader):
     def __init__(
         self,
