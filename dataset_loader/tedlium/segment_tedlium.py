@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from sjpy.decorator import requires_versions
+
 from dataset_loader.abstract import HuggingfaceSnapshot
 
 from dataset_loader.tedlium.segment_tedlium_dataset import SegmentTedliumDataset
@@ -12,6 +14,23 @@ from dataset_loader.tedlium.constants import (
 )
 
 
+@requires_versions(
+    {
+        "package_name": "torch",
+        "allowed": "==2.9.0",
+        "action": "warn",
+    },
+    {
+        "package_name": "torchaudio",
+        "allowed": "==2.9.0",
+        "action": "warn",
+    },
+    {
+        "package_name": "torchcodec",
+        "allowed": "==0.8.0",
+        "action": "warn",
+    },
+)
 class SegmentTedlium(HuggingfaceSnapshot):
     def __init__(
         self,
